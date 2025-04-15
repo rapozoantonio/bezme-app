@@ -11,11 +11,14 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import useAuth from "../../hooks/useAuth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { FontAwesome } from "@expo/vector-icons";
-import { getThemeStyles, layout, typography, forms, feedback } from "../../styles";
+import { getThemeStyles, layout, typography, forms, feedback } from "@/styles";
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { calculatePersonality } from "@/utils/personalityCalculator";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -25,14 +28,100 @@ export default function RegisterScreen() {
   const { register, loginWithGoogle, isLoading, error, user } = useAuth();
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const params = useLocalSearchParams();
+  
+  // Get personality answers from sessionStorage
+  const [personalityComplete, setPersonalityComplete] = useState(false);
+  const [personalityAnswers, setPersonalityAnswers] = useState<Record<string, number>>({});
+  const [personalityDataSaved, setPersonalityDataSaved] = useState(false);
+
+  // Load personality data only once when component mounts
+  useEffect(() => {
+    // Function to check and load personality data
+    const loadPersonalityData = () => {
+      // Check if personality assessment is complete
+      const isComplete = params.personalityComplete === 'true';
+      setPersonalityComplete(isComplete);
+      
+      if (isComplete) {
+        try {
+          // Try to get from sessionStorage
+          const storedAnswers = sessionStorage.getItem('personalityAnswers');
+          if (storedAnswers) {
+            setPersonalityAnswers(JSON.parse(storedAnswers));
+          } else {
+            // If no answers in storage, redirect back to welcome screen
+            router.replace('/(auth)/welcome');
+          }
+        } catch (error) {
+          console.error('Failed to retrieve personality answers:', error);
+          router.replace('/(auth)/welcome');
+        }
+      } else {
+        // Redirect back to welcome screen if not complete
+        router.replace('/(auth)/welcome');
+      }
+    };
+
+    loadPersonalityData();
+    // We only want to run this once when the component mounts
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Get theme-based styles
   const theme = getThemeStyles(colorScheme as "light" | "dark");
 
-  // When the user is updated (after a successful register), redirect to the apps page.
+  // Save personality data when user is available and data hasn't been saved yet
+  useEffect(() => {
+    const updateUserData = async () => {
+      // Only proceed if:
+      // 1. User is authenticated
+      // 2. We have personality answers
+      // 3. We haven't saved the data already
+      if (user && 
+          Object.keys(personalityAnswers).length > 0 && 
+          !personalityDataSaved) {
+        try {
+          // Calculate personality type based on answers
+          const personalityResult = calculatePersonality(personalityAnswers);
+          
+          // Update the user document to include personality data
+          await setDoc(doc(db, 'users', user.uid), {
+            personalityAnswers,
+            personalityResult,
+            personalityComplete: true,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          
+          console.log('Personality data saved to Firestore');
+          
+          // Mark as saved to prevent further save attempts
+          setPersonalityDataSaved(true);
+          
+          // Clear the stored data
+          try {
+            sessionStorage.removeItem('personalityAnswers');
+          } catch (err) {
+            console.error('Failed to clear personality data from storage:', err);
+          }
+        } catch (firestoreErr) {
+          console.error('Failed to save personality data to Firestore:', firestoreErr);
+        }
+      }
+    };
+    
+    updateUserData();
+  }, [user, personalityAnswers, personalityDataSaved]);
+
+  // When the user is updated (after a successful register), redirect to the apps page
   useEffect(() => {
     if (user) {
-      router.replace("/(tabs)");
+      // Add a small delay to ensure Firestore operations complete
+      const redirectTimer = setTimeout(() => {
+        router.replace("/(tabs)");
+      }, 500);
+      
+      return () => clearTimeout(redirectTimer);
     }
   }, [user, router]);
 
@@ -53,12 +142,28 @@ export default function RegisterScreen() {
       return;
     }
 
-    await register(email, password, name);
-    // No need to call router.replace here since we listen to the updated auth context.
+    try {
+      // Register the user with our existing auth service
+      await register(email, password, name);
+      // The useEffect will handle saving the personality data after auth
+    } catch (err) {
+      console.error('Registration error:', err);
+    }
   };
 
   const handleGoogleSignUp = async () => {
-    await loginWithGoogle();
+    try {
+      // Sign in with Google using our existing auth service
+      await loginWithGoogle();
+      // The useEffect will handle saving the personality data after auth
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+    }
+  };
+
+  // Handle back navigation
+  const handleBackToQuestion = () => {
+    router.push('/(auth)/onboarding');
   };
 
   return (
@@ -69,10 +174,27 @@ export default function RegisterScreen() {
     >
       <ScrollView contentContainerStyle={layout.scrollContent}>
         <View style={layout.headerContainer}>
+          <TouchableOpacity onPress={handleBackToQuestion} style={{ alignSelf: 'flex-start', marginBottom: 16 }}>
+            <FontAwesome name="chevron-left" size={18} color={theme.colors.text} />
+          </TouchableOpacity>
+          
           <Text style={[typography.title, theme.textStyle]}>Create Account</Text>
           <Text style={[typography.subtitle, theme.textSecondaryStyle]}>
             Sign up to get started
           </Text>
+          
+          {personalityComplete && (
+            <View style={{ 
+              marginTop: 8, 
+              padding: 8, 
+              backgroundColor: theme.colors.cardBackground, 
+              borderRadius: 8 
+            }}>
+              <Text style={[typography.body, theme.textStyle]}>
+                Thanks for completing the Mix-Making assessment!
+              </Text>
+            </View>
+          )}
         </View>
 
         {error && (
@@ -189,10 +311,6 @@ export default function RegisterScreen() {
               and{" "}
               <Link href="/(legal)/privacy" asChild>
                 <Text style={typography.link}>Privacy Policy</Text>
-              </Link>{" "}
-              and{" "}
-              <Link href="/(legal)/guidelines" asChild>
-                <Text style={typography.link}>Community Guidelines</Text>
               </Link>
             </Text>
           </View>

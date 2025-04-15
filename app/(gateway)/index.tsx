@@ -24,7 +24,9 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 
 // The correct access password (consider using environment variables in production)
-const CORRECT_PASSWORD = 'powerfulconnections';
+//const CORRECT_PASSWORD = 'powerfulconnections';
+//TODO: FIX THIS;
+const CORRECT_PASSWORD = '111';
 // Storage key for remembering access
 const ACCESS_GRANTED_KEY = 'gateway_access_granted';
 // Maximum number of password attempts
@@ -50,7 +52,7 @@ export default function PasswordGateScreen() {
         const hasAccess = localStorage.getItem(ACCESS_GRANTED_KEY);
         if (hasAccess === 'true') {
           console.log('User already has access, redirecting from gateway...');
-          router.replace('/(auth)/login');
+          router.replace('/(auth)/welcome');
         } else {
           setCheckingAccess(false);
         }
@@ -83,7 +85,7 @@ export default function PasswordGateScreen() {
         // Save the access flag in localStorage
         localStorage.setItem(ACCESS_GRANTED_KEY, 'true');
         console.log('access saved to localStorage');
-        router.replace('/(auth)/login');
+        router.replace('/(auth)/welcome');
       } else {
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);

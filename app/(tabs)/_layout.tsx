@@ -1,9 +1,11 @@
 // app/(tabs)/_layout.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Redirect, useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { ActivityIndicator, View } from 'react-native';
+
+const ACCESS_GRANTED_KEY = 'gateway_access_granted';
 
 // Loading screen when checking auth
 function LoadingScreen() {
@@ -17,26 +19,56 @@ function LoadingScreen() {
 export default function TabsLayout() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [gatewayAccess, setGatewayAccess] = useState<boolean | null>(null);
+  const [checking, setChecking] = useState(true);
+  
+  // Check gateway access first
+  useEffect(() => {
+    const checkGatewayAccess = () => {
+      try {
+        const hasAccess = localStorage.getItem(ACCESS_GRANTED_KEY);
+        setGatewayAccess(hasAccess === 'true');
+      } catch (err) {
+        console.error('Access check error:', err);
+        setGatewayAccess(false);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkGatewayAccess();
+  }, []);
   
   // Authentication guard for tabs
   useEffect(() => {
-    if (!isLoading && !user) {
-      // If no user is logged in, redirect to login
-      router.replace('/(auth)/login');
+    if (!checking && !isLoading) {
+      if (!gatewayAccess) {
+        // If gateway access not granted, redirect to gateway
+        router.replace('/(gateway)');
+      }
+      else if (!user) {
+        // If no user is logged in, redirect to welcome screen
+        router.replace('/(auth)/welcome');
+      }
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, gatewayAccess, checking, router]);
 
-  // Show loading indicator while checking authentication
-  if (isLoading) {
+  // Show loading indicator while checking
+  if (isLoading || checking) {
     return <LoadingScreen />;
   }
 
-  // If no user and not loading, redirect to login
-  if (!user) {
-    return <Redirect href="/(auth)/login" />;
+  // If gateway access not granted, redirect to gateway
+  if (!gatewayAccess) {
+    return <Redirect href="/(gateway)" />;
   }
 
-  // User is authenticated, show tabs
+  // If no user, redirect to welcome screen
+  if (!user) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+
+  // User is authenticated and gateway access granted, show tabs
   return (
     <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen

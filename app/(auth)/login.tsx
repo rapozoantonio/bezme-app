@@ -133,17 +133,6 @@ export default function LoginScreen() {
             <FontAwesome name="google" size={20} color="white" style={forms.socialIcon} />
             <Text style={forms.buttonText}>Continue with Google</Text>
           </TouchableOpacity>
-
-          <View style={layout.linkContainer}>
-            <Text style={[typography.body, theme.textSecondaryStyle]}>
-              Don't have an account? 
-            </Text>
-            <Link href="/(auth)/register" asChild>
-              <TouchableOpacity>
-                <Text style={typography.link}> Sign Up</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

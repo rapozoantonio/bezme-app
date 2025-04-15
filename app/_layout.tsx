@@ -30,7 +30,7 @@ function GatewayAwareNavigator() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   
-  // Gateway access check state. `null` means we haven’t completed checking yet.
+  // Gateway access check state. `null` means we haven't completed checking yet.
   const [gatewayAccess, setGatewayAccess] = useState<boolean | null>(null);
 
   // Check localStorage for the gateway access flag when the component mounts.
@@ -51,17 +51,24 @@ function GatewayAwareNavigator() {
   useEffect(() => {
     if (gatewayAccess !== null && gatewayAccess !== true) {
       router.replace('/(gateway)');
+    } else if (gatewayAccess === true && !authLoading && !user) {
+      router.replace('/(auth)/welcome');
     }
-  }, [gatewayAccess, router]);
+  }, [gatewayAccess, authLoading, user, router]);
 
   // While checking gateway access or auth status, show a loading indicator.
   if (gatewayAccess === null || authLoading) {
     return <LoadingScreen />;
   }
   
-  // When gateway access is granted but the user is not logged in, redirect to the auth flow.
-  if (!user) {
-    return <Redirect href="/(auth)/login" />;
+  // When gateway access is granted but the user is not logged in, redirect to the welcome screen.
+  if (gatewayAccess && !user) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+  
+  // If gateway access not granted, redirect to gateway
+  if (!gatewayAccess) {
+    return <Redirect href="/(gateway)" />;
   }
   
   // Otherwise, gateway access is granted and user is logged in. Render main content.

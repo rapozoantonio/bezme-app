@@ -19,6 +19,60 @@ import * as Google from 'expo-auth-session/providers/google';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
+// Verify Firebase initialization
+const verifyFirebaseInit = () => {
+  if (!db) {
+    console.error('Firestore db instance is not initialized!');
+    throw new Error('Firebase Firestore not initialized');
+  }
+};
+
+// Helper function to create or update user document
+const saveUserToFirestore = async (user: User, authProvider: string): Promise<void> => {
+  verifyFirebaseInit();
+  
+  try {
+    console.log(`Attempting to save user ${user.uid} to Firestore...`);
+    const userRef = doc(db, 'users', user.uid);
+    
+    // Try to get existing document
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      console.log(`Creating new user document for ${user.uid}`);
+      await setDoc(userRef, {
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp(),
+        authProvider
+      });
+      console.log(`Successfully created user document for ${user.uid}`);
+    } else {
+      // Update last login timestamp
+      console.log(`Updating existing user document for ${user.uid}`);
+      await setDoc(userRef, {
+        lastLogin: serverTimestamp(),
+        // Update these fields in case they've changed
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL
+      }, { merge: true });
+      console.log(`Successfully updated user document for ${user.uid}`);
+    }
+  } catch (error) {
+    console.error('Error saving user to Firestore:', error);
+    // Log detailed error for debugging
+    if (error instanceof Error) {
+      console.error(`- Error name: ${error.name}`);
+      console.error(`- Error message: ${error.message}`);
+      console.error(`- Error stack: ${error.stack}`);
+    }
+    throw error;
+  }
+};
+
 // Email/Password registration
 export const registerUser = async (email: string, password: string, displayName: string): Promise<User> => {
   try {
@@ -29,13 +83,7 @@ export const registerUser = async (email: string, password: string, displayName:
     await updateProfile(userCredential.user, { displayName });
     
     // Create user document in Firestore
-    await setDoc(doc(db, 'users', userCredential.user.uid), {
-      email,
-      displayName,
-      createdAt: serverTimestamp(),
-      photoURL: null,
-      authProvider: 'email'
-    });
+    await saveUserToFirestore(userCredential.user, 'email');
     
     return userCredential.user;
   } catch (error) {
@@ -48,6 +96,15 @@ export const registerUser = async (email: string, password: string, displayName:
 export const loginUser = async (email: string, password: string): Promise<User> => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    
+    // Update user document in Firestore to track login
+    try {
+      await saveUserToFirestore(userCredential.user, 'email');
+    } catch (firestoreError) {
+      console.error("Failed to update Firestore after login:", firestoreError);
+      // Continue with authentication despite Firestore error
+    }
+    
     return userCredential.user;
   } catch (error) {
     console.error("Login error:", error);
@@ -63,20 +120,13 @@ export const signInWithGoogleWeb = async (): Promise<User> => {
     
     // Get user info
     const user = result.user;
-    const credential = GoogleAuthProvider.credentialFromResult(result);
     
-    // Check if user exists in Firestore
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    
-    // If user doesn't exist, create a new document
-    if (!userDoc.exists()) {
-      await setDoc(doc(db, 'users', user.uid), {
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        createdAt: serverTimestamp(),
-        authProvider: 'google'
-      });
+    // Update user document in Firestore
+    try {
+      await saveUserToFirestore(user, 'google');
+    } catch (firestoreError) {
+      console.error("Failed to update Firestore after Google sign-in:", firestoreError);
+      // Continue with authentication despite Firestore error
     }
     
     return user;
@@ -90,6 +140,12 @@ export const signInWithGoogleWeb = async (): Promise<User> => {
 export const useGoogleAuth = () => {
   // Your Google Web Client ID from Firebase console
   const webClientId = Constants.expoConfig?.extra?.googleWebClientId;
+  
+  // Log configuration for debugging
+  console.log('Google Auth Config:', { 
+    webClientId: webClientId || 'not set',
+    platform: Platform.OS
+  });
   
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: webClientId,
@@ -111,18 +167,12 @@ export const useGoogleAuth = () => {
           // Get user info
           const user = userCredential.user;
           
-          // Check if user exists in Firestore
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          
-          // If user doesn't exist, create a new document
-          if (!userDoc.exists()) {
-            await setDoc(doc(db, 'users', user.uid), {
-              email: user.email,
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              createdAt: serverTimestamp(),
-              authProvider: 'google'
-            });
+          // Update user document in Firestore
+          try {
+            await saveUserToFirestore(user, 'google');
+          } catch (firestoreError) {
+            console.error("Failed to update Firestore after native Google sign-in:", firestoreError);
+            // Continue with authentication despite Firestore error
           }
           
           return user;
