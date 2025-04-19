@@ -6,13 +6,25 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
 import 'react-native-reanimated';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '../hooks/useAuth';
 
+// Use a safer approach for web-only code
+if (Platform.OS === 'web') {
+  // Use global or window to check if we're truly in a browser environment
+  if (typeof window !== 'undefined' && window.document) {
+    const style = document.createElement('link');
+    style.rel = 'stylesheet';
+    style.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css';
+    document.head.appendChild(style);
+  }
+}
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
 
 const ACCESS_GRANTED_KEY = 'gateway_access_granted';
 

@@ -33,9 +33,7 @@ export default function HomeScreen() {
     const auth = getAuth();
     
     // Listen for authentication state changes
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("INDEX: Auth state changed, user:", !!user);
-      
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {   
       if (user) {
         // User is signed in
         try {
@@ -45,13 +43,9 @@ export default function HomeScreen() {
           
           if (userDocSnap.exists()) {
             const firebaseUserData = userDocSnap.data();
-            console.log("INDEX: Got user data from Firestore:", 
-              "onboardingComplete:", firebaseUserData.onboardingComplete,
-              "personalityComplete:", firebaseUserData.personalityComplete);
             
             // Check if user has completed onboarding in Firestore
             if (!firebaseUserData.onboardingComplete && !firebaseUserData.personalityComplete) {
-              console.log("INDEX: User needs to complete onboarding flow");
               
               // Only redirect if we haven't already checked (prevents infinite redirects)
               if (!checkedOnboarding) {
@@ -67,7 +61,6 @@ export default function HomeScreen() {
               }
             } else {
               // User has completed onboarding, set user data
-              console.log("INDEX: User has already completed onboarding, showing home page");
               setUserData({
                 displayName: firebaseUserData.displayName || user.displayName || 'User',
                 photoURL: firebaseUserData.photoURL || user.photoURL || null,
@@ -77,7 +70,6 @@ export default function HomeScreen() {
             }
           } else {
             // Document doesn't exist but user is authenticated
-            console.log("INDEX: User authenticated but no Firestore profile found");
             setUserData({
               displayName: user.displayName || 'User',
               photoURL: user.photoURL || null,
@@ -102,7 +94,6 @@ export default function HomeScreen() {
         }
       } else {
         // User is not signed in - should be handled by the tabs layout
-        console.log("INDEX: No user found, should be handled by tabs layout");
         setUserData({
           displayName: 'Demo User',
           photoURL: null,

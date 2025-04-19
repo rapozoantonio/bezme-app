@@ -24,9 +24,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 
 // The correct access password (consider using environment variables in production)
-//const CORRECT_PASSWORD = 'powerfulconnections';
-//TODO: FIX THIS;
-const CORRECT_PASSWORD = '111';
+const CORRECT_PASSWORD = 'powerfulconnections';
 // Storage key for remembering access
 const ACCESS_GRANTED_KEY = 'gateway_access_granted';
 // Maximum number of password attempts
@@ -66,7 +64,6 @@ export default function PasswordGateScreen() {
   }, []);
 
   const handleSubmit = async () => {
-    console.log('handleSubmit');
     if (attempts >= MAX_ATTEMPTS) {
       Alert.alert(
         'Too Many Attempts', 

@@ -22,7 +22,7 @@ import {
   forms, 
   feedback
 } from '@/styles';
-import DebugReset from '@/components/DebugReset';
+// import DebugReset from '@/components/DebugReset';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -36,25 +36,18 @@ export default function LoginScreen() {
 
   // Monitor authentication state and redirect when user is logged in
   useEffect(() => {
-    if (user) {
-      console.log("LOGIN: User detected in state:", user.uid);
-      
+    if (user) { 
       try {
         localStorage.setItem('gateway_access_granted', 'true');
-        console.log("LOGIN: Gateway access flag set in localStorage");
         
         // Check if it was set properly
         const checkFlag = localStorage.getItem('gateway_access_granted');
-        console.log("LOGIN: Gateway flag check:", checkFlag);
       } catch (err) {
         console.error('LOGIN: Failed to set gateway access:', err);
       }
-
-      console.log("LOGIN: Preparing to navigate to /(tabs)");
       
       // Add a small delay to ensure state updates before navigation
       setTimeout(() => {
-        console.log("LOGIN: Now navigating to /(tabs)");
         router.replace('/(tabs)');
       }, 300);
     }
@@ -104,7 +97,7 @@ export default function LoginScreen() {
             <Text style={[feedback.errorText, theme.errorTextStyle]}>{error}</Text>
           </View>
         )}
-        <DebugReset />
+        {/* <DebugReset /> */}
         <View style={forms.formContainer}>
           <View style={forms.inputContainer}>
             <Text style={[typography.label, theme.textStyle]}>Email</Text>

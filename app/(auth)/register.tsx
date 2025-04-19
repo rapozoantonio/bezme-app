@@ -129,9 +129,7 @@ export default function RegisterScreen() {
           
           // Update the user document to include all data
           await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
-          
-          console.log('All onboarding data saved to Firestore');
-          
+                 
           // Mark as saved to prevent further save attempts
           setDataSaved(true);
           

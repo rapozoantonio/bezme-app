@@ -41,18 +41,12 @@ export default function TabsLayout() {
   
   // In the tabs layout useEffect
   useEffect(() => {
-    console.log("TABS: Auth check - User:", !!user, "GatewayAccess:", gatewayAccess, "IsLoading:", isLoading, "Checking:", checking);
-    
     if (!checking && !isLoading) {
       if (!gatewayAccess) {
-        console.log("TABS: Redirecting to gateway - gateway access check failed");
         router.replace('/(gateway)');
       }
       else if (!user) {
-        console.log("TABS: Redirecting to welcome - user check failed");
         router.replace('/(auth)/welcome');
-      } else {
-        console.log("TABS: All checks passed, showing tabs");
       }
     }
   }, [user, isLoading, gatewayAccess, checking, router]);

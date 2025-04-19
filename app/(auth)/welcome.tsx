@@ -29,7 +29,6 @@ export default function WelcomeScreen() {
     const checkGatewayAccess = () => {
       try {
         const hasAccess = localStorage.getItem(ACCESS_GRANTED_KEY);
-        console.log("WELCOME: Gateway access check:", hasAccess);
         setGatewayAccess(hasAccess === 'true');
       } catch (err) {
         console.error('WELCOME: Access check error:', err);
@@ -39,14 +38,12 @@ export default function WelcomeScreen() {
       }
     };
 
-    console.log("WELCOME: Current pathname:", pathname);
     checkGatewayAccess();
   }, [pathname]);
 
   // Redirect if gateway access not granted
   useEffect(() => {
     if (!checking && gatewayAccess === false) {
-      console.log("WELCOME: No gateway access, redirecting to gateway");
       router.replace('/(gateway)');
     }
   }, [checking, gatewayAccess, router]);
@@ -68,13 +65,10 @@ export default function WelcomeScreen() {
   }
 
   const handleGetStarted = () => {
-    console.log("WELCOME: Navigating to onboarding");
     router.push('/(auth)/onboarding');
   };
 
-  const handleSignIn = () => {
-    console.log("WELCOME: Navigating to login screen directly");
-    
+  const handleSignIn = () => { 
     // The key change: Use replace instead of push and ensure the path is correct
     router.replace('/(auth)/login');
     

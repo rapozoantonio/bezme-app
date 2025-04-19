@@ -16,7 +16,8 @@ Basic project structure with tabs is in place
 
 TODO:
 
-
+- Add not saved users doc
+- Add whatsapp saving
 - Add logout
 - Add rest of the login parts 1 and 2
 - Add secret to .env => powerful...
