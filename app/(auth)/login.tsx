@@ -1,5 +1,5 @@
 // app/(auth)/login.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Platform,
   ScrollView
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import useAuth from '../../hooks/useAuth';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -23,14 +23,42 @@ import {
   feedback
 } from '@/styles';
 import DebugReset from '@/components/DebugReset';
+
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, loginWithGoogle, isLoading, error } = useAuth();
+  const { login, loginWithGoogle, isLoading, error, user } = useAuth();
   const colorScheme = useColorScheme();
+  const router = useRouter();
   
   // Get theme-based styles
   const theme = getThemeStyles(colorScheme as 'light' | 'dark');
+
+  // Monitor authentication state and redirect when user is logged in
+  useEffect(() => {
+    if (user) {
+      console.log("LOGIN: User detected in state:", user.uid);
+      
+      try {
+        localStorage.setItem('gateway_access_granted', 'true');
+        console.log("LOGIN: Gateway access flag set in localStorage");
+        
+        // Check if it was set properly
+        const checkFlag = localStorage.getItem('gateway_access_granted');
+        console.log("LOGIN: Gateway flag check:", checkFlag);
+      } catch (err) {
+        console.error('LOGIN: Failed to set gateway access:', err);
+      }
+
+      console.log("LOGIN: Preparing to navigate to /(tabs)");
+      
+      // Add a small delay to ensure state updates before navigation
+      setTimeout(() => {
+        console.log("LOGIN: Now navigating to /(tabs)");
+        router.replace('/(tabs)');
+      }, 300);
+    }
+  }, [user, router]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -39,16 +67,19 @@ export default function LoginScreen() {
     }
     
     try {
+      console.log('Attempting login with email and password');
       await login(email, password);
+      // The useEffect above will handle navigation when user state changes
     } catch (err: any) {
-      // Error is handled in the auth context
       console.error('Login error:', err);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
+      console.log('Attempting login with Google');
       await loginWithGoogle();
+      // The useEffect above will handle navigation when user state changes
     } catch (err: any) {
       console.error('Google login error:', err);
     }
@@ -133,6 +164,17 @@ export default function LoginScreen() {
             <FontAwesome name="google" size={20} color="white" style={forms.socialIcon} />
             <Text style={forms.buttonText}>Continue with Google</Text>
           </TouchableOpacity>
+
+          <View style={{ marginTop: 24, flexDirection: 'row', justifyContent: 'center' }}>
+            <Text style={[typography.body, theme.textSecondaryStyle]}>
+              Don't have an account?
+            </Text>
+            <Link href="/(auth)/welcome" asChild>
+              <TouchableOpacity>
+                <Text style={typography.link}> Sign Up</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

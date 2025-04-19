@@ -1,106 +1,212 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Image, TouchableOpacity, useColorScheme, ViewStyle, ImageStyle } from 'react-native';
 import React, { useEffect, useState } from 'react';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { db } from '../../firebase.js'; // Adjust the path as needed
-import { collection, getDocs } from 'firebase/firestore';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { db } from '../../firebase.js';
+import { doc, getDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useRouter } from 'expo-router';
+import styles, { colors, spacing, typography, layout, forms } from '@/styles/index';
 
 export default function HomeScreen() {
-  const [connectionStatus, setConnectionStatus] = useState('Testing Firebase...');
+  const colorScheme = useColorScheme() as 'light' | 'dark';
+  const themeStyles = styles.getThemeStyles(colorScheme);
+  const router = useRouter();
+  
+  type UserData = {
+    displayName: string;
+    photoURL: string | null;
+    onboardingComplete?: boolean;
+    personalityComplete?: boolean;
+  };
+
+  const [userData, setUserData] = useState<UserData>({
+    displayName: '',
+    photoURL: null,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [checkedOnboarding, setCheckedOnboarding] = useState(false);
 
   useEffect(() => {
-    async function testFirebaseConnection() {
-      try {
-        // Try to get a collection from Firestore
-        const testCollection = collection(db, 'test');
-        await getDocs(testCollection);
-        
-        // If we get here without errors, the connection works
-        setConnectionStatus('✅ Firebase connection successful!');
-      } catch (error: any) { // Type assertion here
-        console.error('Firebase connection error:', error);
-        // Safely access error message with type checking
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        setConnectionStatus(`❌ Firebase connection failed: ${errorMessage}`);
-      }
-    }
+    const auth = getAuth();
     
-    testFirebaseConnection();
-  }, []);
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("INDEX: Auth state changed, user:", !!user);
+      
+      if (user) {
+        // User is signed in
+        try {
+          // Fetch the user's own document using their UID
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            const firebaseUserData = userDocSnap.data();
+            console.log("INDEX: Got user data from Firestore:", 
+              "onboardingComplete:", firebaseUserData.onboardingComplete,
+              "personalityComplete:", firebaseUserData.personalityComplete);
+            
+            // Check if user has completed onboarding in Firestore
+            if (!firebaseUserData.onboardingComplete && !firebaseUserData.personalityComplete) {
+              console.log("INDEX: User needs to complete onboarding flow");
+              
+              // Only redirect if we haven't already checked (prevents infinite redirects)
+              if (!checkedOnboarding) {
+                setCheckedOnboarding(true);
+                // Make sure gateway access is set for the onboarding flow
+                try {
+                  localStorage.setItem('gateway_access_granted', 'true');
+                } catch (err) {
+                  console.error('Failed to set gateway access:', err);
+                }
+                router.replace('/(auth)/welcome');
+                return;
+              }
+            } else {
+              // User has completed onboarding, set user data
+              console.log("INDEX: User has already completed onboarding, showing home page");
+              setUserData({
+                displayName: firebaseUserData.displayName || user.displayName || 'User',
+                photoURL: firebaseUserData.photoURL || user.photoURL || null,
+                onboardingComplete: firebaseUserData.onboardingComplete,
+                personalityComplete: firebaseUserData.personalityComplete
+              });
+            }
+          } else {
+            // Document doesn't exist but user is authenticated
+            console.log("INDEX: User authenticated but no Firestore profile found");
+            setUserData({
+              displayName: user.displayName || 'User',
+              photoURL: user.photoURL || null,
+            });
+            
+            // Only redirect if we haven't already checked (prevents infinite redirects)
+            if (!checkedOnboarding) {
+              setCheckedOnboarding(true);
+              // Make sure gateway access is set for the onboarding flow
+              try {
+                localStorage.setItem('gateway_access_granted', 'true');
+              } catch (err) {
+                console.error('Failed to set gateway access:', err);
+              }
+              router.replace('/(auth)/welcome');
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setError('Could not load your profile');
+        }
+      } else {
+        // User is not signed in - should be handled by the tabs layout
+        console.log("INDEX: No user found, should be handled by tabs layout");
+        setUserData({
+          displayName: 'Demo User',
+          photoURL: null,
+        });
+      }
+      setLoading(false);
+    });
+    
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, [router, checkedOnboarding]);
+
+  const profileImageStyle: ImageStyle = {
+    height: 120,
+    width: 120,
+    borderRadius: 60,
+    bottom: 20,
+    alignSelf: 'center' as const,
+    position: 'absolute' as const,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  };
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerBackgroundColor={{ 
+        light: colors.light.background, 
+        dark: colors.dark.background 
+      }}
       headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
+        userData.photoURL ? (
+          <Image
+            source={{ uri: userData.photoURL }}
+            style={profileImageStyle}
+          />
+        ) : (
+          <ThemedView
+            style={{
+              ...profileImageStyle,
+              backgroundColor: colorScheme === 'light' ? colors.light.card : colors.dark.card,
+            }}
+          />
+        )
       }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      
-      {/* Firebase Connection Test */}
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Firebase Test</ThemedText>
-        <ThemedText>{connectionStatus}</ThemedText>
-      </ThemedView>
-      
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
+      <ThemedView
+        style={{
+          ...layout.container,
+          padding: spacing.md,
+          alignItems: 'center',
+        }}>
+        {loading ? (
+          <ThemedText type="title">Loading...</ThemedText>
+        ) : error ? (
+          <ThemedText
+            type="title"
+            style={themeStyles.errorTextStyle}>
+            {error}
+          </ThemedText>
+        ) : (
+          <>
+            <ThemedText
+              type="title"
+              style={{
+                fontSize: 28,
+                marginTop: spacing.xl,
+                textAlign: 'center',
+                marginBottom: spacing.md,
+              }}>
+              Hi, {userData.displayName}!
+            </ThemedText>
+            
+            <ThemedView
+              style={{
+                marginVertical: spacing.md,
+                padding: spacing.md,
+                backgroundColor: colorScheme === 'light' 
+                  ? colors.light.successBackground 
+                  : colors.dark.successBackground,
+                borderRadius: 15,
+                width: '100%',
+              }}>
+              <ThemedText
+                type="subtitle"
+                style={{
+                  textAlign: 'center',
+                  fontSize: 22,
+                }}>
+                Done! And get ready to meet your matches tonight😉
+              </ThemedText>
+            </ThemedView>
+            
+            <ThemedText
+              style={{
+                textAlign: 'center',
+                marginVertical: spacing.md,
+                fontSize: 16,
+                opacity: 0.8,
+              }}>
+              We're connecting you with 3 young founders & creators outside your bubble every month.
+              Not just to connect, but to give each other new perspectives and ideas.
+            </ThemedText>
+          </>
+        )}
       </ThemedView>
     </ParallaxScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});

@@ -30,31 +30,53 @@ export default function RegisterScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   
-  // Get personality answers from sessionStorage
+  // State for all onboarding data
   const [personalityComplete, setPersonalityComplete] = useState(false);
   const [personalityAnswers, setPersonalityAnswers] = useState<Record<string, number>>({});
-  const [personalityDataSaved, setPersonalityDataSaved] = useState(false);
+  const [onboardingData, setOnboardingData] = useState<any>(null);
+  const [dataSaved, setDataSaved] = useState(false);
 
-  // Load personality data only once when component mounts
+  // Get theme-based styles
+  const theme = getThemeStyles(colorScheme as "light" | "dark");
+
+  // Load personality and onboarding data only once when component mounts
   useEffect(() => {
-    // Function to check and load personality data
-    const loadPersonalityData = () => {
+    // Function to check and load all data
+    const loadAllData = () => {
       // Check if personality assessment is complete
       const isComplete = params.personalityComplete === 'true';
       setPersonalityComplete(isComplete);
       
       if (isComplete) {
         try {
-          // Try to get from sessionStorage
+          // Get both personality answers and full onboarding data
           const storedAnswers = sessionStorage.getItem('personalityAnswers');
+          const storedOnboardingData = sessionStorage.getItem('onboardingData');
+          
           if (storedAnswers) {
             setPersonalityAnswers(JSON.parse(storedAnswers));
-          } else {
-            // If no answers in storage, redirect back to welcome screen
+          }
+          
+          if (storedOnboardingData) {
+            setOnboardingData(JSON.parse(storedOnboardingData));
+            
+            // Prefill the name and email fields if available
+            const parsedData = JSON.parse(storedOnboardingData);
+            if (parsedData.fullName) {
+              setName(parsedData.fullName);
+            }
+            if (parsedData.email) {
+              setEmail(parsedData.email);
+            }
+          }
+          
+          // Redirect if essential data is missing
+          if (!storedAnswers) {
+            console.error('Missing personality answers');
             router.replace('/(auth)/welcome');
           }
         } catch (error) {
-          console.error('Failed to retrieve personality answers:', error);
+          console.error('Failed to retrieve onboarding data:', error);
           router.replace('/(auth)/welcome');
         }
       } else {
@@ -63,55 +85,71 @@ export default function RegisterScreen() {
       }
     };
 
-    loadPersonalityData();
+    loadAllData();
     // We only want to run this once when the component mounts
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Get theme-based styles
-  const theme = getThemeStyles(colorScheme as "light" | "dark");
-
-  // Save personality data when user is available and data hasn't been saved yet
+  // Save all onboarding data when user is available and data hasn't been saved yet
   useEffect(() => {
     const updateUserData = async () => {
       // Only proceed if:
       // 1. User is authenticated
-      // 2. We have personality answers
+      // 2. We have personality answers at minimum
       // 3. We haven't saved the data already
       if (user && 
           Object.keys(personalityAnswers).length > 0 && 
-          !personalityDataSaved) {
+          !dataSaved) {
         try {
           // Calculate personality type based on answers
           const personalityResult = calculatePersonality(personalityAnswers);
           
-          // Update the user document to include personality data
-          await setDoc(doc(db, 'users', user.uid), {
+          // Prepare the data to save
+          const userData = {
+            // Basic personality data (required)
             personalityAnswers,
             personalityResult,
             personalityComplete: true,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
+            
+            // Additional onboarding data (if available)
+            ...(onboardingData && {
+              fullName: onboardingData.fullName,
+              email: onboardingData.email,
+              projectStatus: onboardingData.projectStatus,
+              projectTypes: onboardingData.projectTypes,
+              identityDescription: onboardingData.identityDescription,
+              joinEarlyAccess: onboardingData.joinEarlyAccess,
+              onboardingComplete: true,
+            }),
+            
+            // Timestamp
+            updatedAt: serverTimestamp(),
+            createdAt: serverTimestamp(),
+          };
           
-          console.log('Personality data saved to Firestore');
+          // Update the user document to include all data
+          await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
+          
+          console.log('All onboarding data saved to Firestore');
           
           // Mark as saved to prevent further save attempts
-          setPersonalityDataSaved(true);
+          setDataSaved(true);
           
           // Clear the stored data
           try {
             sessionStorage.removeItem('personalityAnswers');
+            sessionStorage.removeItem('onboardingData');
           } catch (err) {
-            console.error('Failed to clear personality data from storage:', err);
+            console.error('Failed to clear data from storage:', err);
           }
         } catch (firestoreErr) {
-          console.error('Failed to save personality data to Firestore:', firestoreErr);
+          console.error('Failed to save data to Firestore:', firestoreErr);
         }
       }
     };
     
     updateUserData();
-  }, [user, personalityAnswers, personalityDataSaved]);
+  }, [user, personalityAnswers, onboardingData, dataSaved]);
 
   // When the user is updated (after a successful register), redirect to the apps page
   useEffect(() => {
@@ -145,7 +183,7 @@ export default function RegisterScreen() {
     try {
       // Register the user with our existing auth service
       await register(email, password, name);
-      // The useEffect will handle saving the personality data after auth
+      // The useEffect will handle saving all the data after auth
     } catch (err) {
       console.error('Registration error:', err);
     }
@@ -155,7 +193,7 @@ export default function RegisterScreen() {
     try {
       // Sign in with Google using our existing auth service
       await loginWithGoogle();
-      // The useEffect will handle saving the personality data after auth
+      // The useEffect will handle saving all the data after auth
     } catch (err) {
       console.error('Google sign-in error:', err);
     }
@@ -187,11 +225,24 @@ export default function RegisterScreen() {
             <View style={{ 
               marginTop: 8, 
               padding: 8, 
-              backgroundColor: theme.colors.cardBackground, 
+              backgroundColor: theme.colors.background, 
               borderRadius: 8 
             }}>
               <Text style={[typography.body, theme.textStyle]}>
                 Thanks for completing the Mix-Making assessment!
+              </Text>
+            </View>
+          )}
+          
+          {onboardingData && onboardingData.joinEarlyAccess === true && (
+            <View style={{ 
+              marginTop: 8, 
+              padding: 8, 
+              backgroundColor: `${theme.colors.primary}20`, 
+              borderRadius: 8 
+            }}>
+              <Text style={[typography.body, theme.textStyle]}>
+                🎉 You'll be among the first to try our app!
               </Text>
             </View>
           )}

@@ -8,14 +8,15 @@ import {
   SafeAreaView,
   ActivityIndicator
 } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, usePathname } from 'expo-router';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { getThemeStyles, layout, typography } from '@/styles';
+import { getThemeStyles, layout, typography, spacing } from '@/styles';
 
 const ACCESS_GRANTED_KEY = 'gateway_access_granted';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const pathname = usePathname();
   const colorScheme = useColorScheme();
   const [gatewayAccess, setGatewayAccess] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
@@ -28,21 +29,24 @@ export default function WelcomeScreen() {
     const checkGatewayAccess = () => {
       try {
         const hasAccess = localStorage.getItem(ACCESS_GRANTED_KEY);
+        console.log("WELCOME: Gateway access check:", hasAccess);
         setGatewayAccess(hasAccess === 'true');
       } catch (err) {
-        console.error('Access check error:', err);
+        console.error('WELCOME: Access check error:', err);
         setGatewayAccess(false);
       } finally {
         setChecking(false);
       }
     };
 
+    console.log("WELCOME: Current pathname:", pathname);
     checkGatewayAccess();
-  }, []);
+  }, [pathname]);
 
   // Redirect if gateway access not granted
   useEffect(() => {
     if (!checking && gatewayAccess === false) {
+      console.log("WELCOME: No gateway access, redirecting to gateway");
       router.replace('/(gateway)');
     }
   }, [checking, gatewayAccess, router]);
@@ -51,7 +55,7 @@ export default function WelcomeScreen() {
   if (checking) {
     return (
       <SafeAreaView style={[layout.container, { backgroundColor: theme.colors.background }]}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={layout.center}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       </SafeAreaView>
@@ -64,54 +68,83 @@ export default function WelcomeScreen() {
   }
 
   const handleGetStarted = () => {
+    console.log("WELCOME: Navigating to onboarding");
     router.push('/(auth)/onboarding');
   };
 
   const handleSignIn = () => {
-    router.push('/(auth)/login');
+    console.log("WELCOME: Navigating to login screen directly");
+    
+    // The key change: Use replace instead of push and ensure the path is correct
+    router.replace('/(auth)/login');
+    
+    // If the above doesn't work, uncomment this direct approach
+    // setTimeout(() => {
+    //   window.location.href = '/(auth)/login';
+    // }, 100);
   };
 
   return (
     <SafeAreaView style={[layout.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.contentContainer}>
-        <View style={styles.logoContainer}>
+      <View style={[layout.container, { justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingVertical: spacing.xxl }]}>
+        <View style={{ alignItems: 'center', marginTop: spacing.xxl }}>
           {/* Replace with your app logo */}
-          <View style={[styles.logoPlaceholder, { backgroundColor: theme.colors.primary }]}>
-            <Text style={styles.logoText}>Logo</Text>
+          <View style={[logoStyles.logoPlaceholder, { backgroundColor: theme.colors.primary }]}>
+            <Text style={[typography.body, { color: '#fff', fontWeight: 'bold' }]}>Logo</Text>
           </View>
-          <Text style={[typography.title, theme.textStyle, styles.appName]}>Your App Name</Text>
-          <Text style={[typography.subtitle, theme.textSecondaryStyle, styles.tagline]}>
-            Your app's tagline goes here
+          <Text style={[typography.title, theme.textStyle]}>Bezme</Text>
+          <Text style={[typography.subtitle, theme.textSecondaryStyle]}>
+            You are about to match with 2 amazing founders & creators
           </Text>
         </View>
 
-        <View style={styles.bottomContainer}>
-          <View style={styles.buttonContainer}>
+        <View style={{ width: '100%', alignItems: 'center' }}>
+          <View style={{ width: '100%', marginBottom: spacing.lg }}>
             <TouchableOpacity
-              style={[styles.button, theme.primaryButtonStyle]}
+              style={[logoStyles.button, theme.primaryButtonStyle]}
               onPress={handleGetStarted}
             >
-              <Text style={styles.buttonText}>Get Started</Text>
+              <Text style={[typography.button, { color: '#fff' }]}>Get Started</Text>
             </TouchableOpacity>
             
+            {/* Direct login button with router.replace */}
             <TouchableOpacity
-              style={[styles.button, theme.secondaryButtonStyle, styles.signInButton]}
+              style={[logoStyles.button, theme.secondaryButtonStyle, { marginTop: spacing.md }]}
               onPress={handleSignIn}
             >
-              <Text style={styles.buttonText}>I Already Have an Account</Text>
+              <Text style={[typography.button, { color: '#fff' }]}>I Already Have an Account</Text>
             </TouchableOpacity>
+            
+            {/* Alternative Link-based approach 
+            <Link href="/(auth)/login" asChild replace>
+              <TouchableOpacity
+                style={[logoStyles.button, theme.secondaryButtonStyle, { marginTop: spacing.md }]}
+              >
+                <Text style={[typography.button, { color: '#fff' }]}>I Already Have an Account</Text>
+              </TouchableOpacity>
+            </Link>
+            */}
           </View>
 
+          {/* Debug button
+          <TouchableOpacity 
+            onPress={() => console.log("Current route:", pathname)}
+            style={{ marginTop: 10, padding: 10, backgroundColor: '#eee', borderRadius: 5 }}
+          >
+            <Text>Debug: Show Current Route</Text>
+          </TouchableOpacity>
+          */}
+
           {/* Terms and Privacy Policy */}
-          <View style={styles.termsContainer}>
-            <Text style={[typography.caption, theme.textSecondaryStyle, styles.termsText]}>
+          <View style={layout.termsContainer}>
+            <Text style={[typography.caption, theme.textSecondaryStyle]}>
               By signing up, you agree to our{" "}
               <Link href="/(legal)/terms" asChild>
-                <Text style={styles.linkText}>Terms of Service</Text>
+                <Text style={theme.linkStyle}>Terms of Service</Text>
               </Link>{" "}
               and{" "}
               <Link href="/(legal)/privacy" asChild>
-                <Text style={styles.linkText}>Privacy Policy</Text>
+                <Text style={theme.linkStyle}>Privacy Policy</Text>
               </Link>
             </Text>
           </View>
@@ -121,72 +154,19 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 48,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 60,
-  },
+// Keeping minimal styles that aren't available in the centralized system
+const logoStyles = StyleSheet.create({
   logoPlaceholder: {
     width: 100,
     height: 100,
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-  },
-  logoText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  appName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  tagline: {
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  bottomContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonContainer: {
-    width: '100%',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   button: {
-    paddingVertical: 16,
+    paddingVertical: spacing.md,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  signInButton: {
-    marginTop: 16,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  termsContainer: {
-    marginBottom: 16,
-    paddingHorizontal: 8,
-  },
-  termsText: {
-    textAlign: 'center',
-    fontSize: 12,
-  },
-  linkText: {
-    color: '#3498db',
-    fontWeight: '500',
   }
 });

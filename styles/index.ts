@@ -1,37 +1,38 @@
-// styles/index.ts
 import { StyleSheet } from 'react-native';
 
-// Theme colors
+// Theme colors - enhanced for better contrast and mobile readability
 export const colors = {
   light: {
-    primary: '#4285F4',
-    secondary: '#DB4437',
-    background: '#FFFFFF',
-    card: '#F5F5F5',
-    text: '#000000',
+    primary: '#7575FF',         // Deeper purple for better contrast
+    secondary: '#66C057',       // Deeper mint green for better contrast
+    background: '#FEFDFA',      // Off-white background
+    card: '#FFFFFF',            // Pure white cards for elevation
+    text: '#000000',            // Black text for maximum readability
     textSecondary: '#00000099', // 60% opacity
     textPlaceholder: '#00000066', // 40% opacity
-    border: '#DDDDDD',
+    border: '#E0E0E0',          // Subtler border
     error: '#D32F2F',
     errorBackground: '#FFEBEE',
     success: '#4CAF50',
     successBackground: '#E8F5E9',
-    link: '#4285F4',
+    link: '#6060FF',            // Deeper link color for better accessibility
+    buttonText: '#FFFFFF',      // White text on buttons for contrast
   },
   dark: {
-    primary: '#4285F4',
-    secondary: '#DB4437',
-    background: '#121212',
-    card: '#333333',
-    text: '#FFFFFF',
-    textSecondary: '#FFFFFF99', // 60% opacity
-    textPlaceholder: '#FFFFFF66', // 40% opacity
-    border: '#444444',
+    primary: '#8A8AFF',         // Brighter purple for dark mode
+    secondary: '#7ED471',       // Brighter mint green for dark mode
+    background: '#000000',      // Black background
+    card: '#121212',            // Dark grey cards
+    text: '#FEFDFA',            // Off-white text
+    textSecondary: '#FEFDFA99', // 60% opacity
+    textPlaceholder: '#FEFDFA66', // 40% opacity
+    border: '#333333',
     error: '#EF5350',
     errorBackground: '#3E2723',
     success: '#81C784',
     successBackground: '#1B5E20',
-    link: '#4285F4',
+    link: '#9090FF',            // Brighter link color for dark mode
+    buttonText: '#FFFFFF',      // White text on buttons for contrast
   }
 };
 
@@ -45,43 +46,61 @@ export const spacing = {
   xxl: 48,
 };
 
-// Typography definitions
+// Typography definitions with SF Pro for iOS and Roboto for Android
+// These system fonts render much more clearly on mobile devices
 export const typography = StyleSheet.create({
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    // Using system fonts that render crisply on mobile
+    fontFamily: 'System',
+    fontSize: 24, // Slightly smaller for better rendering
+    fontWeight: '700', // Bold but not extra-bold for better rendering
     marginBottom: spacing.sm,
     textAlign: 'center',
+    letterSpacing: -0.5, // Tighter letter spacing for modern feel
   },
   subtitle: {
+    fontFamily: 'System',
     fontSize: 16,
+    fontWeight: '600', // Semi-bold for better distinction
     textAlign: 'center',
     marginBottom: spacing.md,
+    letterSpacing: -0.3,
   },
   body: {
+    fontFamily: 'System',
     fontSize: 16,
+    fontWeight: '400', // Regular weight
+    lineHeight: 22, // Improved line height for readability
   },
   label: {
-    fontSize: 16,
+    fontFamily: 'System',
+    fontSize: 15, // Slightly smaller for forms
     marginBottom: spacing.sm,
-    fontWeight: '500',
+    fontWeight: '500', // Medium weight
   },
   button: {
+    fontFamily: 'System',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600', // Semi-bold for better tap targets
+    letterSpacing: -0.2,
   },
   small: {
+    fontFamily: 'System',
     fontSize: 14,
+    lineHeight: 20,
   },
   link: {
+    fontFamily: 'System',
     fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.light.link, // We'll use primary color for links in both themes
+    fontWeight: '500', // Medium weight
+    color: colors.light.link,
   },
   caption: {
-    fontSize: 14,
+    fontFamily: 'System',
+    fontSize: 13, // Smaller size for captions
+    fontWeight: '400',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });
 
@@ -130,7 +149,7 @@ export const layout = StyleSheet.create({
   },
 });
 
-// Form styles
+// Form styles - optimized for better mobile UX
 export const forms = StyleSheet.create({
   formContainer: {
     width: '100%',
@@ -139,23 +158,31 @@ export const forms = StyleSheet.create({
     marginBottom: spacing.md,
   },
   input: {
+    fontFamily: 'System',
     height: 50,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12, // More rounded corners
     padding: 15,
     fontSize: 16,
+    backgroundColor: '#FFFFFF', // Ensuring input has background
   },
   button: {
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 12, // More rounded corners
     marginBottom: spacing.md,
+    elevation: 2, // Adding subtle elevation for buttons
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   buttonText: {
+    fontFamily: 'System',
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    letterSpacing: -0.2, // Tighter letter spacing
   },
   socialButton: {
     flexDirection: 'row',
@@ -178,6 +205,7 @@ export const forms = StyleSheet.create({
     height: 1,
   },
   dividerText: {
+    fontFamily: 'Poppins-Regular',
     marginHorizontal: spacing.sm,
     fontSize: 14,
   },
@@ -188,23 +216,35 @@ export const forms = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxText: {
+    fontFamily: 'Poppins-Regular',
     marginLeft: spacing.sm,
     flex: 1,
   },
-  // Buttons in different variations
+  // Buttons in different variations - enhanced for better contrast and touch targets
   primaryButton: {
     backgroundColor: colors.light.primary,
+    shadowColor: colors.light.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
   },
   secondaryButton: {
     backgroundColor: colors.light.secondary,
+    shadowColor: colors.light.secondary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
   },
   outlineButton: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: 1.5, // Slightly thicker border
     borderColor: colors.light.primary,
   },
   outlineButtonText: {
     color: colors.light.primary,
+    fontWeight: '600',
   },
 });
 
@@ -216,6 +256,7 @@ export const feedback = StyleSheet.create({
     marginBottom: spacing.md,
   },
   errorText: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
   },
   successContainer: {
@@ -224,6 +265,7 @@ export const feedback = StyleSheet.create({
     marginBottom: spacing.md,
   },
   successText: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 14,
   },
   loadingContainer: {
@@ -250,6 +292,7 @@ export const containers = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sectionTitle: {
+    fontFamily: 'Poppins-SemiBold',
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: spacing.sm,
@@ -266,17 +309,20 @@ export const getThemeStyles = (colorScheme: 'light' | 'dark') => {
     
     // Input styles
     inputStyle: {
-      backgroundColor: theme.card,
+      backgroundColor: colorScheme === 'light' ? '#FFFFFF' : theme.card,
       borderColor: theme.border,
       color: theme.text,
+      borderRadius: 12,
     },
     
-    // Text colors
+    // Text styles
     textStyle: {
       color: theme.text,
+      fontFamily: 'System',
     },
     textSecondaryStyle: {
       color: theme.textSecondary,
+      fontFamily: 'System',
     },
     
     // Button styles

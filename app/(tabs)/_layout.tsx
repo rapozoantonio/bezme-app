@@ -39,16 +39,20 @@ export default function TabsLayout() {
     checkGatewayAccess();
   }, []);
   
-  // Authentication guard for tabs
+  // In the tabs layout useEffect
   useEffect(() => {
+    console.log("TABS: Auth check - User:", !!user, "GatewayAccess:", gatewayAccess, "IsLoading:", isLoading, "Checking:", checking);
+    
     if (!checking && !isLoading) {
       if (!gatewayAccess) {
-        // If gateway access not granted, redirect to gateway
+        console.log("TABS: Redirecting to gateway - gateway access check failed");
         router.replace('/(gateway)');
       }
       else if (!user) {
-        // If no user is logged in, redirect to welcome screen
+        console.log("TABS: Redirecting to welcome - user check failed");
         router.replace('/(auth)/welcome');
+      } else {
+        console.log("TABS: All checks passed, showing tabs");
       }
     }
   }, [user, isLoading, gatewayAccess, checking, router]);
@@ -70,22 +74,23 @@ export default function TabsLayout() {
 
   // User is authenticated and gateway access granted, show tabs
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs 
+      screenOptions={{ 
+        headerShown: false,
+        tabBarStyle: {
+          justifyContent: 'center',
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          tabBarItemStyle: { flex: 1 },
         }}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <TabBarIcon name="search" color={color} />,
-        }}
-      />
-      {/* Add more tabs as needed */}
+      {/* Other tabs will be added later */}
     </Tabs>
   );
 }

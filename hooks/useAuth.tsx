@@ -1,7 +1,6 @@
 // hooks/useAuth.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { router } from 'expo-router';
 import * as AuthService from '../services/auth';
 import { auth } from '../firebase';
 import * as WebBrowser from 'expo-web-browser';
@@ -50,37 +49,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => unsubscribe();
   }, []);
 
-  // Register function
+  // Register function - no navigation
   const register = async (email: string, password: string, displayName: string) => {
     setIsLoading(true);
     setError(null);
     try {
       await AuthService.registerUser(email, password, displayName);
-      router.replace('/(tabs)');
+      // No navigation here - components will handle it based on auth state
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');
       console.error('Registration error:', err);
+      throw err; // Rethrow to let component handle it
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Login function
+  // Login function - no navigation
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
       await AuthService.loginUser(email, password);
-      router.replace('/(tabs)');
+      // No navigation here - components will handle it based on auth state
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
       console.error('Login error:', err);
+      throw err; // Rethrow to let component handle it
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Google sign-in function
+  // Google sign-in function - no navigation
   const loginWithGoogle = async () => {
     setIsLoading(true);
     setError(null);
@@ -96,31 +97,44 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           throw new Error('Google authentication is not set up properly');
         }
       }
-      router.replace('/(tabs)');
+      // No navigation here - components will handle it based on auth state
     } catch (err: any) {
       setError(err.message || 'An error occurred during Google sign-in');
       console.error('Google sign-in error:', err);
+      throw err; // Rethrow to let component handle it
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Logout function
+  // Logout function - keep navigation for now as it's less problematic
   const logout = async () => {
     setIsLoading(true);
     setError(null);
     try {
       await AuthService.logoutUser();
+      
+      // For logout, we'll also clear the gateway access
+      try {
+        localStorage.removeItem('gateway_access_granted');
+      } catch (err) {
+        console.error('Failed to clear gateway access:', err);
+      }
+      
+      // Navigation can remain here for logout since it's not related to our issue
+      // but could be moved to components later for consistency
+      const { router } = require('expo-router');
       router.replace('/(auth)/login');
     } catch (err: any) {
       setError(err.message || 'An error occurred during logout');
       console.error('Logout error:', err);
+      throw err; // Rethrow to let component handle it
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Password reset function
+  // Password reset function - no changes needed
   const forgotPassword = async (email: string) => {
     setIsLoading(true);
     setError(null);
