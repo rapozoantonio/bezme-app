@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  ActivityIndicator
+  ActivityIndicator,
+  Image,
+  ImageBackground
 } from 'react-native';
 import { Link, useRouter, usePathname } from 'expo-router';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -79,81 +81,84 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView style={[layout.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[layout.container, { justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingVertical: spacing.xxl }]}>
-        <View style={{ alignItems: 'center', marginTop: spacing.xxl }}>
-          {/* Replace with your app logo */}
-          <View style={[logoStyles.logoPlaceholder, { backgroundColor: theme.colors.primary }]}>
-            <Text style={[typography.body, { color: '#fff', fontWeight: 'bold' }]}>Logo</Text>
-          </View>
-          <Text style={[typography.title, theme.textStyle]}>Bezme</Text>
-          <Text style={[typography.subtitle, theme.textSecondaryStyle]}>
-            You are about to match with 2 amazing founders & creators
-          </Text>
-        </View>
-
-        <View style={{ width: '100%', alignItems: 'center' }}>
-          <View style={{ width: '100%', marginBottom: spacing.lg }}>
-            <TouchableOpacity
-              style={[logoStyles.button, theme.primaryButtonStyle]}
-              onPress={handleGetStarted}
-            >
-              <Text style={[typography.button, { color: '#fff' }]}>Get Started</Text>
-            </TouchableOpacity>
-            
-            {/* Direct login button with router.replace */}
-            <TouchableOpacity
-              style={[logoStyles.button, theme.secondaryButtonStyle, { marginTop: spacing.md }]}
-              onPress={handleSignIn}
-            >
-              <Text style={[typography.button, { color: '#fff' }]}>I Already Have an Account</Text>
-            </TouchableOpacity>
-            
-            {/* Alternative Link-based approach 
-            <Link href="/(auth)/login" asChild replace>
-              <TouchableOpacity
-                style={[logoStyles.button, theme.secondaryButtonStyle, { marginTop: spacing.md }]}
-              >
-                <Text style={[typography.button, { color: '#fff' }]}>I Already Have an Account</Text>
-              </TouchableOpacity>
-            </Link>
-            */}
-          </View>
-
-          {/* Debug button
-          <TouchableOpacity 
-            onPress={() => console.log("Current route:", pathname)}
-            style={{ marginTop: 10, padding: 10, backgroundColor: '#eee', borderRadius: 5 }}
-          >
-            <Text>Debug: Show Current Route</Text>
-          </TouchableOpacity>
-          */}
-
-          {/* Terms and Privacy Policy */}
-          <View style={layout.termsContainer}>
-            <Text style={[typography.caption, theme.textSecondaryStyle]}>
-              By signing up, you agree to our{" "}
-              <Link href="/(legal)/terms" asChild>
-                <Text style={theme.linkStyle}>Terms of Service</Text>
-              </Link>{" "}
-              and{" "}
-              <Link href="/(legal)/privacy" asChild>
-                <Text style={theme.linkStyle}>Privacy Policy</Text>
-              </Link>
+    <ImageBackground 
+      source={require('../../assets/images/people_talking_room.png')}
+      style={{
+        flex: 1,
+        width: '100%',
+        height: '100%'
+      }}
+      imageStyle={{
+        resizeMode: 'cover',
+        top: '-10%',  // Crop 10% from the top
+        height: '110%' // Increase height to compensate for the cropping
+      }}
+    >
+      <SafeAreaView style={[layout.container, { backgroundColor: 'transparent' }]}>
+        <View style={[layout.container, { justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingVertical: spacing.xxl }]}>
+          <View style={{ alignItems: 'center', marginTop: spacing.xxl }}>
+            {/* Replace with your app logo */}
+            <Image 
+              source={require('../../assets/images/bezme-logo-white.png')} 
+              style={logoStyles.logoPlaceholder} 
+              resizeMode="contain"
+            />
+            <Text style={[typography.subtitle, { 
+              color: '#fff', 
+              fontSize: 18, 
+              fontWeight: '500', 
+              textAlign: 'center', 
+              marginHorizontal: spacing.lg,
+              maxWidth: 300,
+              lineHeight: 24
+            }]}>
+              You are about to match with 2 amazing founders & creators
             </Text>
           </View>
+
+          <View style={{ width: '100%', alignItems: 'center' }}>
+            <View style={{ width: '100%', marginBottom: spacing.lg }}>
+              <TouchableOpacity
+                style={[logoStyles.button, theme.primaryButtonStyle]}
+                onPress={handleGetStarted}
+              >
+                <Text style={[typography.button, { color: '#fff' }]}>Get Started</Text>
+              </TouchableOpacity>
+              
+              {/* Direct login button with router.replace */}
+              <TouchableOpacity
+                style={[logoStyles.button, { marginTop: spacing.md }]}
+                onPress={handleSignIn}
+              >
+                <Text style={[typography.button, { color: '#fff', textDecorationLine: 'underline' }]}>I Already Have an Account</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Terms and Privacy Policy */}
+            <View style={layout.termsContainer}>
+              <Text style={[typography.caption, { color: '#fff' }]}>
+                By signing up, you agree to our{" "}
+                <TouchableOpacity onPress={() => router.push("/(legal)/terms")}>
+                  <Text style={[theme.linkStyle, { color: '#fff', textDecorationLine: 'underline' }]}>Terms of Service</Text>
+                </TouchableOpacity>{" "}
+                and{" "}
+                <TouchableOpacity onPress={() => router.push("/(legal)/privacy")}>
+                  <Text style={[theme.linkStyle, { color: '#fff', textDecorationLine: 'underline' }]}>Privacy Policy</Text>
+                </TouchableOpacity>
+              </Text>
+            </View>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 // Keeping minimal styles that aren't available in the centralized system
 const logoStyles = StyleSheet.create({
   logoPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 220,
+    height: 220,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,

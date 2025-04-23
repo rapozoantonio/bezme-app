@@ -23,8 +23,8 @@ import {
 } from '@/styles';
 import { FontAwesome } from '@expo/vector-icons';
 
-// The correct access password (consider using environment variables in production)
-const CORRECT_PASSWORD = 'powerfulconnections';
+// Use environment variable for password
+const CORRECT_PASSWORD = process.env.EXPO_PUBLIC_GATEWAY_PASSWORD || 'disconnect';
 // Storage key for remembering access
 const ACCESS_GRANTED_KEY = 'gateway_access_granted';
 // Maximum number of password attempts
@@ -100,11 +100,7 @@ export default function PasswordGateScreen() {
   };
 
   const handleOpenInstagram = () => {
-    Linking.openURL('https://www.instagram.com/bezmezh.hub/');
-  };
-
-  const handleOpenWebsite = () => {
-    Linking.openURL('https://www.bezmezhhub.com/');
+    Linking.openURL('https://www.instagram.com/bezme.hub/');
   };
 
   const togglePasswordVisibility = () => {
@@ -190,24 +186,17 @@ export default function PasswordGateScreen() {
             </Text>
             <View style={[layout.row, { marginTop: 8 }]}>
               <TouchableOpacity onPress={handleOpenInstagram}>
-                <Text style={typography.link}>Instagram @bezmezh.hub</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={[layout.row, { marginTop: 4 }]}>
-              <Text style={[typography.body, theme.textSecondaryStyle]}>Visit </Text>
-              <TouchableOpacity onPress={handleOpenWebsite}>
-                <Text style={typography.link}>www.bezmezhhub.com</Text>
+                <Text style={typography.link}>Instagram @bezme.hub</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={{ marginTop: 60, alignItems: 'center' }}>
             <Text style={[typography.subtitle, { fontWeight: 'bold' }, theme.textStyle]}>
-              Bezme Mix-Making
+              Bezme Hub
             </Text>
             <Text style={[typography.caption, theme.textSecondaryStyle, { marginTop: 8, textAlign: 'center' }]}>
-              A community for young creators & founders who question the status quo. 
-              We connect people across industries to spark innovation and expand horizons.
+            The space for young driven creators & founders who build coll things 
             </Text>
           </View>
         </View>

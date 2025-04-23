@@ -18,9 +18,9 @@ TODO:
 
 - Add not saved users doc
 - Add whatsapp saving
+- Fix icons to mobile
 - Add logout
 - Add rest of the login parts 1 and 2
-- Add secret to .env => powerful...
 - Create a very simple UI
 
 

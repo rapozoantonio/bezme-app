@@ -16,8 +16,8 @@ import useAuth from "../../hooks/useAuth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { FontAwesome } from "@expo/vector-icons";
 import { getThemeStyles, layout, typography, forms, feedback } from "@/styles";
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../../firebase";
 import { calculatePersonality } from "@/utils/personalityCalculator";
 
 export default function RegisterScreen() {
@@ -29,7 +29,7 @@ export default function RegisterScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const params = useLocalSearchParams();
-  
+
   // State for all onboarding data
   const [personalityComplete, setPersonalityComplete] = useState(false);
   const [personalityAnswers, setPersonalityAnswers] = useState<Record<string, number>>({});
@@ -44,22 +44,22 @@ export default function RegisterScreen() {
     // Function to check and load all data
     const loadAllData = () => {
       // Check if personality assessment is complete
-      const isComplete = params.personalityComplete === 'true';
+      const isComplete = params.personalityComplete === "true";
       setPersonalityComplete(isComplete);
-      
+
       if (isComplete) {
         try {
           // Get both personality answers and full onboarding data
-          const storedAnswers = sessionStorage.getItem('personalityAnswers');
-          const storedOnboardingData = sessionStorage.getItem('onboardingData');
-          
+          const storedAnswers = sessionStorage.getItem("personalityAnswers");
+          const storedOnboardingData = sessionStorage.getItem("onboardingData");
+
           if (storedAnswers) {
             setPersonalityAnswers(JSON.parse(storedAnswers));
           }
-          
+
           if (storedOnboardingData) {
             setOnboardingData(JSON.parse(storedOnboardingData));
-            
+
             // Prefill the name and email fields if available
             const parsedData = JSON.parse(storedOnboardingData);
             if (parsedData.fullName) {
@@ -69,19 +69,19 @@ export default function RegisterScreen() {
               setEmail(parsedData.email);
             }
           }
-          
+
           // Redirect if essential data is missing
           if (!storedAnswers) {
-            console.error('Missing personality answers');
-            router.replace('/(auth)/welcome');
+            console.error("Missing personality answers");
+            router.replace("/(auth)/welcome");
           }
         } catch (error) {
-          console.error('Failed to retrieve onboarding data:', error);
-          router.replace('/(auth)/welcome');
+          console.error("Failed to retrieve onboarding data:", error);
+          router.replace("/(auth)/welcome");
         }
       } else {
         // Redirect back to welcome screen if not complete
-        router.replace('/(auth)/welcome');
+        router.replace("/(auth)/welcome");
       }
     };
 
@@ -97,55 +97,55 @@ export default function RegisterScreen() {
       // 1. User is authenticated
       // 2. We have personality answers at minimum
       // 3. We haven't saved the data already
-      if (user && 
-          Object.keys(personalityAnswers).length > 0 && 
-          !dataSaved) {
+      if (user && Object.keys(personalityAnswers).length > 0 && !dataSaved) {
         try {
           // Calculate personality type based on answers
           const personalityResult = calculatePersonality(personalityAnswers);
-          
+
           // Prepare the data to save
           const userData = {
             // Basic personality data (required)
             personalityAnswers,
             personalityResult,
             personalityComplete: true,
-            
+
             // Additional onboarding data (if available)
             ...(onboardingData && {
               fullName: onboardingData.fullName,
               email: onboardingData.email,
               projectStatus: onboardingData.projectStatus,
               projectTypes: onboardingData.projectTypes,
+              projectDescription: onboardingData.projectDescription,
+              selectedInterests: onboardingData.selectedInterests,
               identityDescription: onboardingData.identityDescription,
               joinEarlyAccess: onboardingData.joinEarlyAccess,
               onboardingComplete: true,
             }),
-            
+
             // Timestamp
             updatedAt: serverTimestamp(),
             createdAt: serverTimestamp(),
           };
-          
+
           // Update the user document to include all data
-          await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
-                 
+          await setDoc(doc(db, "users", user.uid), userData, { merge: true });
+
           // Mark as saved to prevent further save attempts
           setDataSaved(true);
-          
+
           // Clear the stored data
           try {
-            sessionStorage.removeItem('personalityAnswers');
-            sessionStorage.removeItem('onboardingData');
+            sessionStorage.removeItem("personalityAnswers");
+            sessionStorage.removeItem("onboardingData");
           } catch (err) {
-            console.error('Failed to clear data from storage:', err);
+            console.error("Failed to clear data from storage:", err);
           }
         } catch (firestoreErr) {
-          console.error('Failed to save data to Firestore:', firestoreErr);
+          console.error("Failed to save data to Firestore:", firestoreErr);
         }
       }
     };
-    
+
     updateUserData();
   }, [user, personalityAnswers, onboardingData, dataSaved]);
 
@@ -156,7 +156,7 @@ export default function RegisterScreen() {
       const redirectTimer = setTimeout(() => {
         router.replace("/(tabs)");
       }, 500);
-      
+
       return () => clearTimeout(redirectTimer);
     }
   }, [user, router]);
@@ -183,7 +183,7 @@ export default function RegisterScreen() {
       await register(email, password, name);
       // The useEffect will handle saving all the data after auth
     } catch (err) {
-      console.error('Registration error:', err);
+      console.error("Registration error:", err);
     }
   };
 
@@ -193,13 +193,13 @@ export default function RegisterScreen() {
       await loginWithGoogle();
       // The useEffect will handle saving all the data after auth
     } catch (err) {
-      console.error('Google sign-in error:', err);
+      console.error("Google sign-in error:", err);
     }
   };
 
   // Handle back navigation
   const handleBackToQuestion = () => {
-    router.push('/(auth)/onboarding');
+    router.push("/(auth)/onboarding");
   };
 
   return (
@@ -210,47 +210,30 @@ export default function RegisterScreen() {
     >
       <ScrollView contentContainerStyle={layout.scrollContent}>
         <View style={layout.headerContainer}>
-          <TouchableOpacity onPress={handleBackToQuestion} style={{ alignSelf: 'flex-start', marginBottom: 16 }}>
+          <TouchableOpacity onPress={handleBackToQuestion} style={{ alignSelf: "flex-start", marginBottom: 16 }}>
             <FontAwesome name="chevron-left" size={18} color={theme.colors.text} />
           </TouchableOpacity>
-          
+
           <Text style={[typography.title, theme.textStyle]}>Create Account</Text>
           <Text style={[typography.subtitle, theme.textSecondaryStyle]}>
-            Sign up to get started
+            Last step! We will reveal your matches in a bit
           </Text>
-          
-          {personalityComplete && (
-            <View style={{ 
-              marginTop: 8, 
-              padding: 8, 
-              backgroundColor: theme.colors.background, 
-              borderRadius: 8 
-            }}>
-              <Text style={[typography.body, theme.textStyle]}>
-                Thanks for completing the Mix-Making assessment!
-              </Text>
-            </View>
-          )}
-          
-          {onboardingData && onboardingData.joinEarlyAccess === true && (
-            <View style={{ 
-              marginTop: 8, 
-              padding: 8, 
-              backgroundColor: `${theme.colors.primary}20`, 
-              borderRadius: 8 
-            }}>
-              <Text style={[typography.body, theme.textStyle]}>
-                🎉 You'll be among the first to try our app!
-              </Text>
-            </View>
-          )}
+
+          <View
+            style={{
+              marginTop: 8,
+              padding: 8,
+              backgroundColor: `${theme.colors.primary}20`,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={[typography.body, theme.textStyle]}>if this step is skipped, we can't find your matches</Text>
+          </View>
         </View>
 
         {error && (
           <View style={[feedback.errorContainer, theme.errorContainerStyle]}>
-            <Text style={[feedback.errorText, theme.errorTextStyle]}>
-              {error}
-            </Text>
+            <Text style={[feedback.errorText, theme.errorTextStyle]}>{error}</Text>
           </View>
         )}
 
@@ -294,9 +277,7 @@ export default function RegisterScreen() {
           </View>
 
           <View style={forms.inputContainer}>
-            <Text style={[typography.label, theme.textStyle]}>
-              Confirm Password
-            </Text>
+            <Text style={[typography.label, theme.textStyle]}>Confirm Password</Text>
             <TextInput
               style={[forms.input, theme.inputStyle]}
               placeholder="Confirm your password"
@@ -307,16 +288,8 @@ export default function RegisterScreen() {
             />
           </View>
 
-          <TouchableOpacity
-            style={[forms.button, theme.primaryButtonStyle]}
-            onPress={handleRegister}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={forms.buttonText}>Create Account</Text>
-            )}
+          <TouchableOpacity style={[forms.button, theme.primaryButtonStyle]} onPress={handleRegister} disabled={isLoading}>
+            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={forms.buttonText}>Create Account</Text>}
           </TouchableOpacity>
 
           <View style={forms.dividerContainer}>
@@ -330,19 +303,12 @@ export default function RegisterScreen() {
             onPress={handleGoogleSignUp}
             disabled={isLoading}
           >
-            <FontAwesome
-              name="google"
-              size={20}
-              color="white"
-              style={forms.socialIcon}
-            />
+            <FontAwesome name="google" size={20} color="white" style={forms.socialIcon} />
             <Text style={forms.buttonText}>Sign up with Google</Text>
           </TouchableOpacity>
 
           <View style={layout.linkContainer}>
-            <Text style={[typography.body, theme.textSecondaryStyle]}>
-              Already have an account?
-            </Text>
+            <Text style={[typography.body, theme.textSecondaryStyle]}>Already have an account?</Text>
             <Link href="/(auth)/login" asChild>
               <TouchableOpacity>
                 <Text style={typography.link}> Sign In</Text>
