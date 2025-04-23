@@ -912,7 +912,7 @@ export default function OnboardingScreen() {
       <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
         <View style={layout.headerContainer}>
           <Text style={[typography.title, theme.textStyle]}>
-            Ready! We'll reveal your matches at 8 pm on Disconnect party
+            	Almost there! 
           </Text>
           <Text style={[typography.subtitle, theme.textSecondaryStyle, { marginTop: spacing.md }]}>
             But we have one more surprise for you 🤭
