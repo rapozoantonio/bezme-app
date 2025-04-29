@@ -22,21 +22,21 @@ export enum QuestionType {
     // Energy Questions (E/I)
     { id: "Q1", text: "It's easy for you to connect with new people.", type: QuestionType.Energy },
     { id: "Q4", text: "You love being at busy bustling places more than at intimate & secluded ones.", type: QuestionType.Energy },
-    { id: "Q9", text: "You rarely feel insecure around other people.", type: QuestionType.Energy },
+    { id: "Q9", text: "Being around people feels like your natural state.", type: QuestionType.Energy },
     
     // Information Questions (N/S)
     { id: "Q2", text: "If a decision feels right to you, you often act without needing proof.", type: QuestionType.Information },
     { id: "Q6", text: "You get excited by big visions, even if they seem unrealistic.", type: QuestionType.Information },
-    { id: "Q10", text: "You think about the future more than the present.", type: QuestionType.Information },
+    { id: "Q10", text: "Manifestation is a big part of you life.", type: QuestionType.Information },
     
     // Decision Questions (T/F)
     { id: "Q3", text: "You usually make decisions with your head, not your heart.", type: QuestionType.Decision },
     { id: "Q7", text: "You rarely second-guess the choices that you have made.", type: QuestionType.Decision },
-    { id: "Q11", text: "You're not easily influenced by emotional arguments.", type: QuestionType.Decision },
+    { id: "Q11", text: "You often step back from emotions to see a situation clearly.", type: QuestionType.Decision },
     
     // Perception Questions (U/R)
     { id: "Q5", text: "You used to tone yourself down to be more accepted.", type: QuestionType.Perception },
-    { id: "Q8", text: "You often notice things others don't.", type: QuestionType.Perception },
+    { id: "Q8", text: "You’ve been kind of an outsider as a kid.", type: QuestionType.Perception },
     { id: "Q12", text: "You often need more time to explain your ideas.", type: QuestionType.Perception },
     
     // Tie-Breaker Questions

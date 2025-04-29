@@ -112,7 +112,7 @@ export default function WelcomeScreen() {
               maxWidth: 300,
               lineHeight: 24
             }]}>
-              You are about to match with 2 amazing founders & creators
+              We’re about to pick your first 3 mixes! Help us know you better so your group really clicks
             </Text>
           </View>
 

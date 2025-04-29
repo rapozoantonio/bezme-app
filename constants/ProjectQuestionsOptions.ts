@@ -13,6 +13,7 @@ export const projectTypes = [
   { id: 'food', label: 'Food & beverage', emoji: '🍽️' },
   { id: 'sports', label: 'Sports', emoji: '🏆' },
   { id: 'enterprise', label: 'Enterprise', emoji: '🏛️' },
+  { id: 'marketing_sales', label: 'Marketing & Sales', emoji: '📈' }, 
   { id: 'other', label: 'Other', emoji: '🔍' },
   { id: 'none', label: 'I don\'t have my project/biz', emoji: '🤔' },
 ];

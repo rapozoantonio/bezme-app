@@ -126,9 +126,9 @@ export default function PasswordGateScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={layout.headerContainer}>
-          <Text style={[typography.title, theme.textStyle]}>Enter Password</Text>
+          <Text style={[typography.title, theme.textStyle]}>Same people get you nowhere</Text>
           <Text style={[typography.subtitle, theme.textSecondaryStyle]}>
-            Join the Bezme Community
+            Meet 4 young creators & founders outside your bubble each month
           </Text>
         </View>
         
@@ -182,11 +182,11 @@ export default function PasswordGateScreen() {
 
           <View style={{ marginTop: 30, alignItems: 'center' }}>
             <Text style={[typography.body, theme.textSecondaryStyle]}>
-              Don't have access? Connect with us on
+              Don't have access? Reach us on
             </Text>
             <View style={[layout.row, { marginTop: 8 }]}>
               <TouchableOpacity onPress={handleOpenInstagram}>
-                <Text style={typography.link}>Instagram @bezme.hub</Text>
+                <Text style={typography.link}>@bezme.hub</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -196,7 +196,7 @@ export default function PasswordGateScreen() {
               Bezme Hub
             </Text>
             <Text style={[typography.caption, theme.textSecondaryStyle, { marginTop: 8, textAlign: 'center' }]}>
-            The space for young driven creators & founders who build coll things 
+            The space for young driven creators & founders who build cool things 
             </Text>
           </View>
         </View>

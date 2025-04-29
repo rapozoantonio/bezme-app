@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  FlatList,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -17,6 +18,10 @@ import { getThemeStyles, layout, typography, forms, spacing } from "@/styles";
 import { personalityQuestions } from "@/constants/PersonalityQuestions";
 import { projectTypes, projectStatusOptions } from "@/constants/ProjectQuestionsOptions";
 import { interestOptions } from "@/constants/InterestsQuestionsOptions";
+import { locationOptions } from "@/constants/LocationOptions";
+
+import MatchStatsComponent from "@/components/onboarding/MatchStatsComponent";
+import PotentialMatchesComponent from "@/components/onboarding/PotentialMatchesComponent";
 
 // Define onboarding steps
 enum OnboardingStep {
@@ -25,10 +30,12 @@ enum OnboardingStep {
   PROJECT_TYPE = 2,
   PROJECT_DESCRIPTION = 3,
   PERSONALITY_QUESTIONS = 4,
-  INTERESTS_SELECTION = 5,
-  IDENTITY_QUESTION = 6,
-  MATCH_REVEAL = 7,
-  APP_INVITATION = 8,
+  MATCH_STATS = 5,
+  INTERESTS_SELECTION = 6,
+  IDENTITY_QUESTION = 7,
+  MATCH_REVEAL = 8,
+  APP_INVITATION = 9,
+  POTENTIAL_MATCHES = 10,
 }
 
 // Define action types for reducer
@@ -44,6 +51,7 @@ type OnboardingAction =
 interface OnboardingState {
   fullName: string;
   email: string;
+  location: string | null;
   projectStatus: string | null;
   projectTypes: string[];
   projectDescription: string;
@@ -53,11 +61,11 @@ interface OnboardingState {
   joinEarlyAccess: boolean | null;
   errors: Record<string, string>;
 }
-
 // Initial state
 const initialState: OnboardingState = {
   fullName: "",
   email: "",
+  location: null,
   projectStatus: null,
   projectTypes: [],
   projectDescription: "",
@@ -296,7 +304,7 @@ const ProgressIndicator = ({
 }) => {
   // Calculate overall progress
   const totalQuestions = personalityQuestions.length;
-  const totalSteps = Object.keys(OnboardingStep).length / 2;
+  const totalSteps = Object.keys(OnboardingStep).length / 2; // Total number of steps
   let progress = 0;
 
   if (currentStep === OnboardingStep.PERSONALITY_QUESTIONS) {
@@ -305,16 +313,25 @@ const ProgressIndicator = ({
     const personalityProgress = (currentQuestionIndex / totalQuestions) * 40;
     progress = baseProgress + personalityProgress;
   } else if (currentStep > OnboardingStep.PERSONALITY_QUESTIONS) {
-    // After personality questions, we're at 80% complete, and the final 3 steps share the remaining 20%
+    // After personality questions, we're at 80% complete, and the final steps share the remaining 20%
     const baseProgress = 80; // After personality questions
-    const remainingStepsWeight = 20; // Last 3 steps share 20%
-    const stepsAfterPersonality = currentStep - OnboardingStep.PERSONALITY_QUESTIONS;
-    const additionalProgress = (stepsAfterPersonality / 3) * remainingStepsWeight;
+    const remainingStepsWeight = 20; // Final steps share 20%
+    const totalStepsAfterPersonality = totalSteps - OnboardingStep.PERSONALITY_QUESTIONS - 1; // Number of steps after personality
+    const stepsCompletedAfterPersonality = currentStep - OnboardingStep.PERSONALITY_QUESTIONS;
+
+    // Calculate progress based on completed steps after personality questions
+    const additionalProgress = Math.min(
+      (stepsCompletedAfterPersonality / totalStepsAfterPersonality) * remainingStepsWeight,
+      remainingStepsWeight
+    );
     progress = baseProgress + additionalProgress;
   } else {
     // For initial steps 0-2, each is worth about 13% (40% / 3)
     progress = (currentStep / 3) * 40;
   }
+
+  // Ensure progress never exceeds 100%
+  progress = Math.min(progress, 100);
 
   return (
     <View
@@ -440,18 +457,25 @@ export default function OnboardingScreen() {
     dispatch({ type: "SET_FIELD", field: "projectStatus", value: statusId });
 
     if (statusId === "no") {
-      //TODO: Uncomment this when ready - this is just for disconnect party, normally it would not allow users without a project to proceed
-      setCurrentStep(OnboardingStep.PERSONALITY_QUESTIONS);
-      // Alert.alert(
-      //   "Hmm, we might not be a good fit",
-      //   "Bezme is designed for entrepreneurs, creators, and business owners. We appreciate your interest, but our platform may not be aligned with your current needs.",
-      //   [
-      //     {
-      //       text: "I understand",
-      //       onPress: () => router.push("/(auth)/welcome"),
-      //     },
-      //   ]
-      // );
+      if (Platform.OS === "web") {
+        window.alert(
+          "You see we designed this experience for creators & founders – established and becoming. If you're not creating or building anything yet, we can't onboard you. We'll let you know if we plan any public event in your city. And as soon as you start build your thing, you know where to find us😉."
+        );
+        setTimeout(() => {
+          router.replace("/(auth)/welcome");
+        }, 300);
+      } else {
+        Alert.alert(
+          "Hmm, we might not be a good fit",
+          "You see we designed this experience for creators & founders – established and becoming. If you're not creating or building anything yet, we can't onboard you. We'll let you know if we plan any public event in your city. And as soon as you start build your thing, you know where to find us😉.",
+          [
+            {
+              text: "I understand",
+              onPress: () => router.replace("/(auth)/welcome"),
+            },
+          ]
+        );
+      }
     } else {
       setCurrentStep(OnboardingStep.PROJECT_TYPE);
     }
@@ -497,8 +521,8 @@ export default function OnboardingScreen() {
         setSelectedRating(null);
         setIsLoading(false);
       } else {
-        // All personality questions answered, move to interests selection
-        setCurrentStep(OnboardingStep.INTERESTS_SELECTION);
+        // All personality questions answered, move to match stats
+        setCurrentStep(OnboardingStep.MATCH_STATS);
         setSelectedRating(null);
         setIsLoading(false);
       }
@@ -507,21 +531,12 @@ export default function OnboardingScreen() {
     return () => clearTimeout(navigationTimer);
   };
 
+  const handleMatchStatsContinue = () => {
+    setCurrentStep(OnboardingStep.INTERESTS_SELECTION);
+  };
+
   const handleInterestSelect = (interestId: string) => {
     dispatch({ type: "TOGGLE_INTEREST", interestId });
-
-    // Check if we now have exactly 2 interests selected
-    const updatedInterests = state.selectedInterests.includes(interestId)
-      ? state.selectedInterests.filter((id) => id !== interestId)
-      : [...state.selectedInterests, interestId].slice(0, 2);
-
-    // Auto-advance if exactly 2 interests are selected
-    if (updatedInterests.length === 2 && !state.selectedInterests.includes(interestId)) {
-      // Short delay before advancing (for visual feedback)
-      setTimeout(() => {
-        setCurrentStep(OnboardingStep.IDENTITY_QUESTION);
-      }, 500);
-    }
   };
 
   // Handle identity description submit
@@ -547,13 +562,17 @@ export default function OnboardingScreen() {
   // Handle app invitation response
   const handleAppInvitationResponse = (joining: boolean) => {
     dispatch({ type: "SET_FIELD", field: "joinEarlyAccess", value: joining });
+    setCurrentStep(OnboardingStep.POTENTIAL_MATCHES);
+  };
 
+  // Add handler for potential matches sign up button
+  const handleSignUp = () => {
     // Store data in sessionStorage with the correct keys
     try {
       // Create final onboarding data object
       const finalOnboardingData = {
         ...state,
-        joinEarlyAccess: joining,
+        joinEarlyAccess: state.joinEarlyAccess,
       };
 
       // Store complete onboarding data
@@ -565,7 +584,7 @@ export default function OnboardingScreen() {
       console.error("Failed to save onboarding data:", error);
     }
 
-    // Navigate to the registration screen with the expected parameter regardless of choice
+    // Navigate to the registration screen with the expected parameter
     router.push({
       pathname: "/(auth)/register",
       params: {
@@ -591,12 +610,33 @@ export default function OnboardingScreen() {
     }
   };
 
-  // Step rendering functions
+  // Modified renderBasicInfoStep with simple location dropdown
   const renderBasicInfoStep = () => {
+    const [showLocationOptions, setShowLocationOptions] = useState(false);
+    const [isCustomLocation, setIsCustomLocation] = useState(false);
+    const [customLocation, setCustomLocation] = useState("");
+
+    const handleLocationSelect = (item: any) => {
+      if (item.label === "Other") {
+        setIsCustomLocation(true);
+        setCustomLocation("");
+        dispatch({ type: "SET_FIELD", field: "location", value: "" });
+      } else {
+        setIsCustomLocation(false);
+        dispatch({ type: "SET_FIELD", field: "location", value: `${item.emoji} ${item.label}` });
+      }
+      setShowLocationOptions(false);
+    };
+
+    const handleCustomLocationChange = (text: any) => {
+      setCustomLocation(text);
+      dispatch({ type: "SET_FIELD", field: "location", value: text });
+    };
+
     return (
       <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
         <View style={layout.headerContainer}>
-          <Text style={[typography.title, theme.textStyle]}>Let's get to know you</Text>
+          <Text style={[typography.title, theme.textStyle]}>First, tell us a bit about yourself</Text>
         </View>
 
         <View style={forms.formContainer}>
@@ -624,6 +664,86 @@ export default function OnboardingScreen() {
               autoCapitalize="none"
             />
             <ErrorMessage message={state.errors.email} theme={theme} />
+          </View>
+
+          {/* Location Field with Custom Option */}
+          <View style={forms.inputContainer}>
+            <Text style={[typography.label, theme.textStyle]}>Location</Text>
+
+            {isCustomLocation ? (
+              // Custom location input
+              <TextInput
+                style={[forms.input, theme.inputStyle, state.errors.location && { borderColor: theme.colors.error }]}
+                value={customLocation}
+                onChangeText={handleCustomLocationChange}
+                placeholder="Enter your location"
+                placeholderTextColor={theme.colors.textPlaceholder}
+                autoFocus
+              />
+            ) : (
+              // Location dropdown
+              <TouchableOpacity
+                style={[
+                  forms.input,
+                  theme.inputStyle,
+                  { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+                  state.errors.location && { borderColor: theme.colors.error },
+                ]}
+                onPress={() => setShowLocationOptions(!showLocationOptions)}
+              >
+                <Text style={theme.textStyle}>
+                  {state.location || `${locationOptions[0].emoji} ${locationOptions[0].label}`}
+                </Text>
+                <Text>▼</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Switch back to dropdown button (only shown when in custom mode) */}
+            {isCustomLocation && (
+              <TouchableOpacity
+                style={{ marginTop: 8 }}
+                onPress={() => {
+                  setIsCustomLocation(false);
+                  setShowLocationOptions(true);
+                }}
+              >
+                <Text style={[theme.textStyle, { color: theme.colors.primary }]}>Choose from list</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Location dropdown */}
+            {showLocationOptions && !isCustomLocation && (
+              <View
+                style={{
+                  marginTop: 4,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  borderRadius: 8,
+                  backgroundColor: theme.colors.card,
+                  maxHeight: 200,
+                }}
+              >
+                <FlatList
+                  data={locationOptions}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={{
+                        padding: spacing.sm,
+                        borderBottomWidth: 1,
+                        borderBottomColor: theme.colors.border,
+                      }}
+                      onPress={() => handleLocationSelect(item)}
+                    >
+                      <Text style={theme.textStyle}>
+                        {item.emoji} {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+            <ErrorMessage message={state.errors.location} theme={theme} />
           </View>
 
           <TouchableOpacity
@@ -853,6 +973,32 @@ export default function OnboardingScreen() {
               />
             ))}
           </View>
+
+          {/* Add continue button */}
+          <TouchableOpacity
+            style={[
+              forms.button,
+              forms.primaryButton,
+              { marginTop: spacing.md, width: "100%" },
+              state.selectedInterests.length < 2 && {
+                opacity: 0.5,
+                backgroundColor: theme.colors.border,
+              },
+            ]}
+            onPress={() => setCurrentStep(OnboardingStep.IDENTITY_QUESTION)}
+            disabled={state.selectedInterests.length < 2}
+          >
+            <Text
+              style={[
+                forms.buttonText,
+                state.selectedInterests.length < 2 && {
+                  color: theme.colors.textSecondary,
+                },
+              ]}
+            >
+              Continue
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     );
@@ -911,9 +1057,7 @@ export default function OnboardingScreen() {
     return (
       <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
         <View style={layout.headerContainer}>
-          <Text style={[typography.title, theme.textStyle]}>
-            	Almost there! 
-          </Text>
+          <Text style={[typography.title, theme.textStyle]}>Almost there!</Text>
           <Text style={[typography.subtitle, theme.textSecondaryStyle, { marginTop: spacing.md }]}>
             But we have one more surprise for you 🤭
           </Text>
@@ -932,11 +1076,10 @@ export default function OnboardingScreen() {
     return (
       <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
         <View style={layout.headerContainer}>
-          <Text style={[typography.title, theme.textStyle]}>
-            Almost there! But before the final step…
-          </Text>
+          <Text style={[typography.title, theme.textStyle]}>What we will do together…</Text>
           <Text style={[typography.body, theme.textStyle, { marginTop: spacing.md, textAlign: "center" }]}>
-            This test is actually a part of an app we’re building to mix you with 3 young founders & creators outside your bubble every month.
+            This test is actually a part of an app we’re building to mix you with 3 young founders & creators outside your
+            bubble every month.
           </Text>
           <Text style={[typography.body, theme.textStyle, { marginTop: spacing.md, textAlign: "center" }]}>
             Not just to connect, but to give each other new perspectives and ideas.
@@ -985,6 +1128,8 @@ export default function OnboardingScreen() {
         return renderProjectDescriptionStep();
       case OnboardingStep.PERSONALITY_QUESTIONS:
         return renderPersonalityQuestionsStep();
+      case OnboardingStep.MATCH_STATS:
+        return <MatchStatsComponent theme={theme} onContinue={handleMatchStatsContinue} />;
       case OnboardingStep.INTERESTS_SELECTION:
         return renderInterestsSelectionStep();
       case OnboardingStep.IDENTITY_QUESTION:
@@ -993,6 +1138,8 @@ export default function OnboardingScreen() {
         return renderMatchRevealStep();
       case OnboardingStep.APP_INVITATION:
         return renderAppInvitationStep();
+      case OnboardingStep.POTENTIAL_MATCHES:
+        return <PotentialMatchesComponent theme={theme} onSignUp={handleSignUp} />;
       default:
         return null;
     }

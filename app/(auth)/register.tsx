@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  SafeAreaView,
+  Dimensions,
 } from "react-native";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import useAuth from "../../hooks/useAuth";
@@ -113,6 +115,7 @@ export default function RegisterScreen() {
             ...(onboardingData && {
               fullName: onboardingData.fullName,
               email: onboardingData.email,
+              location: onboardingData.location,
               projectStatus: onboardingData.projectStatus,
               projectTypes: onboardingData.projectTypes,
               projectDescription: onboardingData.projectDescription,
@@ -202,135 +205,148 @@ export default function RegisterScreen() {
     router.push("/(auth)/onboarding");
   };
 
+  // Get device dimensions
+  const { height: windowHeight } = Dimensions.get('window');
+
   return (
-    <KeyboardAvoidingView
-      style={[layout.container, { backgroundColor: theme.colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
-    >
-      <ScrollView contentContainerStyle={layout.scrollContent}>
-        <View style={layout.headerContainer}>
-          <TouchableOpacity onPress={handleBackToQuestion} style={{ alignSelf: "flex-start", marginBottom: 16 }}>
-            <FontAwesome name="chevron-left" size={18} color={theme.colors.text} />
-          </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
+      >
+        <ScrollView 
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingVertical: 20
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Compact Header */}
+          <View style={{ marginBottom: 16 }}>
+            <TouchableOpacity onPress={handleBackToQuestion} style={{ alignSelf: "flex-start", marginBottom: 10 }}>
+              <FontAwesome name="chevron-left" size={18} color={theme.colors.text} />
+            </TouchableOpacity>
 
-          <Text style={[typography.title, theme.textStyle]}>Create Account</Text>
-          <Text style={[typography.subtitle, theme.textSecondaryStyle]}>
-            Last step! We will reveal your matches in a bit
-          </Text>
-
-          <View
-            style={{
-              marginTop: 8,
-              padding: 8,
-              backgroundColor: `${theme.colors.primary}20`,
-              borderRadius: 8,
-            }}
-          >
-            <Text style={[typography.body, theme.textStyle]}>if this step is skipped, we can't find your matches</Text>
-          </View>
-        </View>
-
-        {error && (
-          <View style={[feedback.errorContainer, theme.errorContainerStyle]}>
-            <Text style={[feedback.errorText, theme.errorTextStyle]}>{error}</Text>
-          </View>
-        )}
-
-        <View style={forms.formContainer}>
-          <View style={forms.inputContainer}>
-            <Text style={[typography.label, theme.textStyle]}>Full Name</Text>
-            <TextInput
-              style={[forms.input, theme.inputStyle]}
-              placeholder="Enter your full name"
-              placeholderTextColor={theme.colors.textPlaceholder}
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={forms.inputContainer}>
-            <Text style={[typography.label, theme.textStyle]}>Email</Text>
-            <TextInput
-              style={[forms.input, theme.inputStyle]}
-              placeholder="Enter your email"
-              placeholderTextColor={theme.colors.textPlaceholder}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-
-          <View style={forms.inputContainer}>
-            <Text style={[typography.label, theme.textStyle]}>Password</Text>
-            <TextInput
-              style={[forms.input, theme.inputStyle]}
-              placeholder="Create a password"
-              placeholderTextColor={theme.colors.textPlaceholder}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
-
-          <View style={forms.inputContainer}>
-            <Text style={[typography.label, theme.textStyle]}>Confirm Password</Text>
-            <TextInput
-              style={[forms.input, theme.inputStyle]}
-              placeholder="Confirm your password"
-              placeholderTextColor={theme.colors.textPlaceholder}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
-          </View>
-
-          <TouchableOpacity style={[forms.button, theme.primaryButtonStyle]} onPress={handleRegister} disabled={isLoading}>
-            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={forms.buttonText}>Create Account</Text>}
-          </TouchableOpacity>
-
-          <View style={forms.dividerContainer}>
-            <View style={[forms.divider, theme.dividerStyle]} />
-            <Text style={[forms.dividerText, theme.textSecondaryStyle]}>OR</Text>
-            <View style={[forms.divider, theme.dividerStyle]} />
-          </View>
-
-          <TouchableOpacity
-            style={[forms.socialButton, theme.secondaryButtonStyle]}
-            onPress={handleGoogleSignUp}
-            disabled={isLoading}
-          >
-            <FontAwesome name="google" size={20} color="white" style={forms.socialIcon} />
-            <Text style={forms.buttonText}>Sign up with Google</Text>
-          </TouchableOpacity>
-
-          <View style={layout.linkContainer}>
-            <Text style={[typography.body, theme.textSecondaryStyle]}>Already have an account?</Text>
-            <Link href="/(auth)/login" asChild>
-              <TouchableOpacity>
-                <Text style={typography.link}> Sign In</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-
-          {/* Legal Terms Block */}
-          <View style={layout.termsContainer}>
-            <Text style={[typography.caption, theme.textSecondaryStyle]}>
-              By signing up, you agree to our{" "}
-              <Link href="/(legal)/terms" asChild>
-                <Text style={typography.link}>Terms of Service</Text>
-              </Link>{" "}
-              and{" "}
-              <Link href="/(legal)/privacy" asChild>
-                <Text style={typography.link}>Privacy Policy</Text>
-              </Link>
+            <Text style={{ ...typography.title, ...theme.textStyle, fontSize: 22, marginBottom: 6 }}>Create Account</Text>
+            <Text style={{ ...typography.subtitle, ...theme.textSecondaryStyle, fontSize: 14, marginBottom: 6 }}>
+              Last Step! If this is skipped, we can't find your matches
             </Text>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          {error && (
+            <View style={{ ...feedback.errorContainer, ...theme.errorContainerStyle, marginBottom: 8 }}>
+              <Text style={{ ...feedback.errorText, ...theme.errorTextStyle }}>{error}</Text>
+            </View>
+          )}
+
+          <View style={{ flex: 1, justifyContent: 'space-between' }}>
+            {/* Form Fields in a more compact layout */}
+            <View>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ ...typography.label, ...theme.textStyle, marginBottom: 4, fontSize: 13 }}>Full Name</Text>
+                <TextInput
+                  style={{ ...forms.input, ...theme.inputStyle, height: 42 }}
+                  placeholder="Enter your full name"
+                  placeholderTextColor={theme.colors.textPlaceholder}
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                />
+              </View>
+
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ ...typography.label, ...theme.textStyle, marginBottom: 4, fontSize: 13 }}>Email</Text>
+                <TextInput
+                  style={{ ...forms.input, ...theme.inputStyle, height: 42 }}
+                  placeholder="Enter your email"
+                  placeholderTextColor={theme.colors.textPlaceholder}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ ...typography.label, ...theme.textStyle, marginBottom: 4, fontSize: 13 }}>Password</Text>
+                <TextInput
+                  style={{ ...forms.input, ...theme.inputStyle, height: 42 }}
+                  placeholder="Create a password"
+                  placeholderTextColor={theme.colors.textPlaceholder}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
+
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ ...typography.label, ...theme.textStyle, marginBottom: 4, fontSize: 13 }}>Confirm Password</Text>
+                <TextInput
+                  style={{ ...forms.input, ...theme.inputStyle, height: 42 }}
+                  placeholder="Confirm your password"
+                  placeholderTextColor={theme.colors.textPlaceholder}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+
+            {/* Buttons and footer section */}
+            <View>
+              <TouchableOpacity 
+                style={{ ...forms.button, ...theme.primaryButtonStyle, height: 46 }} 
+                onPress={handleRegister} 
+                disabled={isLoading}
+              >
+                {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={forms.buttonText}>Create Account</Text>}
+              </TouchableOpacity>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }} />
+                <Text style={{ ...forms.dividerText, ...theme.textSecondaryStyle, marginHorizontal: 8 }}>OR</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }} />
+              </View>
+
+              <TouchableOpacity
+                style={{ ...forms.socialButton, ...theme.secondaryButtonStyle, height: 46 }}
+                onPress={handleGoogleSignUp}
+                disabled={isLoading}
+              >
+                <FontAwesome name="google" size={18} color="white" style={{ marginRight: 8 }} />
+                <Text style={forms.buttonText}>Sign up with Google</Text>
+              </TouchableOpacity>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 12 }}>
+                <Text style={{ ...typography.body, ...theme.textSecondaryStyle, fontSize: 13 }}>Already have an account?</Text>
+                <Link href="/(auth)/login" asChild>
+                  <TouchableOpacity>
+                    <Text style={{ ...typography.link, fontSize: 13 }}> Sign In</Text>
+                  </TouchableOpacity>
+                </Link>
+              </View>
+
+              {/* Legal Terms Block - More compact */}
+              <View style={{ marginTop: 8, alignItems: 'center' }}>
+                <Text style={{ ...typography.caption, ...theme.textSecondaryStyle, fontSize: 11, textAlign: 'center' }}>
+                  By signing up, you agree to our{" "}
+                  <Link href="/(legal)/terms" asChild>
+                    <Text style={{ ...typography.link, fontSize: 11 }}>Terms of Service</Text>
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/(legal)/privacy" asChild>
+                    <Text style={{ ...typography.link, fontSize: 11 }}>Privacy Policy</Text>
+                  </Link>
+                </Text>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
