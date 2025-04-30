@@ -388,6 +388,9 @@ export default function OnboardingScreen() {
   const [randomizedQuestions, setRandomizedQuestions] = useState<typeof personalityQuestions>([]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLocationOptions, setShowLocationOptions] = useState(false);
+  const [isCustomLocation, setIsCustomLocation] = useState(false);
+  const [customLocation, setCustomLocation] = useState("");
 
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -612,10 +615,6 @@ export default function OnboardingScreen() {
 
   // Modified renderBasicInfoStep with simple location dropdown
   const renderBasicInfoStep = () => {
-    const [showLocationOptions, setShowLocationOptions] = useState(false);
-    const [isCustomLocation, setIsCustomLocation] = useState(false);
-    const [customLocation, setCustomLocation] = useState("");
-
     const handleLocationSelect = (item: any) => {
       if (item.label === "Other") {
         setIsCustomLocation(true);
