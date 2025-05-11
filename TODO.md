@@ -16,6 +16,7 @@ Basic project structure with tabs is in place
 
 TODO:
 
+- Improve naming of testParticipant name of variable
 - Add not saved users doc
 - Add whatsapp saving
 - Fix icons to mobile

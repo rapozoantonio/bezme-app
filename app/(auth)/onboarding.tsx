@@ -28,14 +28,10 @@ enum OnboardingStep {
   BASIC_INFO = 0,
   PROJECT_STATUS = 1,
   PROJECT_TYPE = 2,
-  PROJECT_DESCRIPTION = 3,
-  PERSONALITY_QUESTIONS = 4,
-  MATCH_STATS = 5,
-  INTERESTS_SELECTION = 6,
-  IDENTITY_QUESTION = 7,
-  MATCH_REVEAL = 8,
-  APP_INVITATION = 9,
-  POTENTIAL_MATCHES = 10,
+  PERSONALITY_QUESTIONS = 3,
+  MATCH_STATS = 4,
+  INTERESTS_SELECTION = 5,
+  MATCH_REVEAL = 6,
 }
 
 // Define action types for reducer
@@ -54,11 +50,8 @@ interface OnboardingState {
   location: string | null;
   projectStatus: string | null;
   projectTypes: string[];
-  projectDescription: string;
   personalityAnswers: Record<string, number>;
   selectedInterests: string[];
-  identityDescription: string;
-  joinEarlyAccess: boolean | null;
   errors: Record<string, string>;
 }
 // Initial state
@@ -68,11 +61,8 @@ const initialState: OnboardingState = {
   location: null,
   projectStatus: null,
   projectTypes: [],
-  projectDescription: "",
   personalityAnswers: {},
   selectedInterests: [],
-  identityDescription: "",
-  joinEarlyAccess: null,
   errors: {},
 };
 
@@ -483,25 +473,15 @@ export default function OnboardingScreen() {
       setCurrentStep(OnboardingStep.PROJECT_TYPE);
     }
   };
-
   const handleProjectTypeSelect = (typeId: string) => {
     dispatch({ type: "TOGGLE_PROJECT_TYPE", typeId });
   };
 
   const handleProjectTypeSubmit = () => {
-    setCurrentStep(OnboardingStep.PROJECT_DESCRIPTION);
-  };
-
-  const handleProjectDescriptionSubmit = () => {
-    // Simple validation without dispatching
-    if (!state.projectDescription.trim()) {
-      // Just don't proceed to the next step
-      return;
-    }
-
-    // If valid, move to next step
+    // Skip directly to personality questions
     setCurrentStep(OnboardingStep.PERSONALITY_QUESTIONS);
   };
+  // Project Description submit handler removed
 
   const handleRatingSelect = (rating: number) => {
     setSelectedRating(rating);
@@ -542,40 +522,13 @@ export default function OnboardingScreen() {
     dispatch({ type: "TOGGLE_INTEREST", interestId });
   };
 
-  // Handle identity description submit
-  const handleIdentitySubmit = () => {
-    // Validate description is not empty
-    if (!state.identityDescription.trim()) {
-      dispatch({
-        type: "SET_ERROR",
-        field: "identityDescription",
-        message: "Please provide a brief description",
-      });
-      return;
-    }
-
-    setCurrentStep(OnboardingStep.MATCH_REVEAL);
-  };
-
-  // Handle match reveal continuation
-  const handleMatchRevealContinue = () => {
-    setCurrentStep(OnboardingStep.APP_INVITATION);
-  };
-
-  // Handle app invitation response
-  const handleAppInvitationResponse = (joining: boolean) => {
-    dispatch({ type: "SET_FIELD", field: "joinEarlyAccess", value: joining });
-    setCurrentStep(OnboardingStep.POTENTIAL_MATCHES);
-  };
-
-  // Add handler for potential matches sign up button
+  // Handler for sign up button
   const handleSignUp = () => {
     // Store data in sessionStorage with the correct keys
     try {
-      // Create final onboarding data object
+      // Create final onboarding data object without removed fields
       const finalOnboardingData = {
         ...state,
-        joinEarlyAccess: state.joinEarlyAccess,
       };
 
       // Store complete onboarding data
@@ -595,13 +548,9 @@ export default function OnboardingScreen() {
       },
     });
   };
-
   // Handle step navigation
   const handleBack = () => {
     switch (currentStep) {
-      case OnboardingStep.PROJECT_DESCRIPTION:
-        setCurrentStep(OnboardingStep.PROJECT_TYPE);
-        break;
       case OnboardingStep.PROJECT_TYPE:
         setCurrentStep(OnboardingStep.PROJECT_STATUS);
         break;
@@ -846,61 +795,7 @@ export default function OnboardingScreen() {
       </ScrollView>
     );
   };
-
-  const renderProjectDescriptionStep = () => {
-    return (
-      <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
-        <View style={layout.headerContainer}>
-          <Text style={[typography.title, theme.textStyle]}>Tell about you or your project 1 sentence</Text>
-          <Text style={[typography.subtitle, theme.textSecondaryStyle]}>The idea I'm building is...</Text>
-        </View>
-
-        <View style={forms.formContainer}>
-          <View style={forms.inputContainer}>
-            <TextInput
-              style={[
-                forms.input,
-                theme.inputStyle,
-                { textAlignVertical: "top", minHeight: 100, paddingTop: spacing.sm },
-                state.errors.projectDescription && { borderColor: theme.colors.error },
-              ]}
-              value={state.projectDescription}
-              onChangeText={(text) => {
-                if (text.length <= 200) {
-                  dispatch({ type: "SET_FIELD", field: "projectDescription", value: text });
-                }
-              }}
-              placeholder="Growing a community for young founders & creators..."
-              placeholderTextColor={theme.colors.textPlaceholder}
-              multiline={true}
-              numberOfLines={4}
-              maxLength={200}
-            />
-            <Text style={[typography.caption, theme.textSecondaryStyle, { alignSelf: "flex-end" }]}>
-              {state.projectDescription.length}/200
-            </Text>
-            <ErrorMessage message={state.errors.projectDescription} theme={theme} />
-          </View>
-
-          <TouchableOpacity
-            style={[
-              forms.button,
-              forms.primaryButton,
-              { marginTop: spacing.md },
-              !state.projectDescription.trim() && {
-                opacity: 0.5,
-                backgroundColor: theme.colors.border,
-              },
-            ]}
-            onPress={handleProjectDescriptionSubmit}
-            disabled={!state.projectDescription.trim()}
-          >
-            <Text style={forms.buttonText}>Continue</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
+  // Project Description step removed
 
   const renderPersonalityQuestionsStep = () => {
     return (
@@ -984,7 +879,7 @@ export default function OnboardingScreen() {
                 backgroundColor: theme.colors.border,
               },
             ]}
-            onPress={() => setCurrentStep(OnboardingStep.IDENTITY_QUESTION)}
+            onPress={() => setCurrentStep(OnboardingStep.MATCH_REVEAL)}
             disabled={state.selectedInterests.length < 2}
           >
             <Text
@@ -1002,112 +897,20 @@ export default function OnboardingScreen() {
       </ScrollView>
     );
   };
-
-  // Additional rendering functions for new steps
-  const renderIdentityQuestionStep = () => {
-    return (
-      <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
-        <View style={layout.headerContainer}>
-          <Text style={[typography.title, theme.textStyle]}>How could your matches recognize you at the party?</Text>
-          <Text style={[typography.subtitle, theme.textSecondaryStyle]}>
-            Any accessories, outfit part, hair color or whatever you can think of
-          </Text>
-        </View>
-
-        <View style={forms.formContainer}>
-          <View style={forms.inputContainer}>
-            <TextInput
-              style={[
-                forms.input,
-                theme.inputStyle,
-                { textAlignVertical: "top", minHeight: 100, paddingTop: spacing.sm },
-                state.errors.identityDescription && { borderColor: theme.colors.error },
-              ]}
-              value={state.identityDescription}
-              onChangeText={(text) => {
-                if (text.length <= 200) {
-                  dispatch({ type: "SET_FIELD", field: "identityDescription", value: text });
-                }
-              }}
-              placeholder="Describe how others can recognize you"
-              placeholderTextColor={theme.colors.textPlaceholder}
-              multiline={true}
-              numberOfLines={4}
-              maxLength={200}
-            />
-            <Text style={[typography.caption, theme.textSecondaryStyle, { alignSelf: "flex-end" }]}>
-              {state.identityDescription.length}/200
-            </Text>
-            <ErrorMessage message={state.errors.identityDescription} theme={theme} />
-          </View>
-
-          <TouchableOpacity
-            style={[forms.button, forms.primaryButton, { marginTop: spacing.md }]}
-            onPress={handleIdentitySubmit}
-          >
-            <Text style={forms.buttonText}>Continue</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
-
+  // Identity Question step removed
   const renderMatchRevealStep = () => {
     return (
       <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
         <View style={layout.headerContainer}>
           <Text style={[typography.title, theme.textStyle]}>Almost there!</Text>
           <Text style={[typography.subtitle, theme.textSecondaryStyle, { marginTop: spacing.md }]}>
-            But we have one more surprise for you 🤭
+            Complete your account to see your results!
           </Text>
         </View>
 
         <View style={[forms.formContainer, { marginTop: spacing.xl }]}>
-          <TouchableOpacity style={[forms.button, forms.primaryButton]} onPress={handleMatchRevealContinue}>
-            <Text style={forms.buttonText}>Tell me!</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
-
-  const renderAppInvitationStep = () => {
-    return (
-      <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
-        <View style={layout.headerContainer}>
-          <Text style={[typography.title, theme.textStyle]}>What we will do together…</Text>
-          <Text style={[typography.body, theme.textStyle, { marginTop: spacing.md, textAlign: "center" }]}>
-            This test is actually a part of an app we’re building to mix you with 3 young founders & creators outside your
-            bubble every month.
-          </Text>
-          <Text style={[typography.body, theme.textStyle, { marginTop: spacing.md, textAlign: "center" }]}>
-            Not just to connect, but to give each other new perspectives and ideas.
-          </Text>
-          <Text style={[typography.body, theme.textStyle, { marginTop: spacing.md, textAlign: "center" }]}>
-            We’ll spill more details soon, but you can join the very first editions for free.
-          </Text>
-        </View>
-
-        <View style={[forms.formContainer, { marginTop: spacing.xl }]}>
-          <TouchableOpacity
-            style={[forms.button, forms.primaryButton, { marginBottom: spacing.md }]}
-            onPress={() => handleAppInvitationResponse(true)}
-          >
-            <Text style={forms.buttonText}>I'm in</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              forms.button,
-              {
-                backgroundColor: theme.colors.background,
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            onPress={() => handleAppInvitationResponse(false)}
-          >
-            <Text style={[typography.body, theme.textStyle]}>No, thanks</Text>
+          <TouchableOpacity style={[forms.button, forms.primaryButton]} onPress={handleSignUp}>
+            <Text style={forms.buttonText}>Create Account</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1123,34 +926,23 @@ export default function OnboardingScreen() {
         return renderProjectStatusStep();
       case OnboardingStep.PROJECT_TYPE:
         return renderProjectTypeStep();
-      case OnboardingStep.PROJECT_DESCRIPTION:
-        return renderProjectDescriptionStep();
       case OnboardingStep.PERSONALITY_QUESTIONS:
         return renderPersonalityQuestionsStep();
       case OnboardingStep.MATCH_STATS:
         return <MatchStatsComponent theme={theme} onContinue={handleMatchStatsContinue} />;
       case OnboardingStep.INTERESTS_SELECTION:
         return renderInterestsSelectionStep();
-      case OnboardingStep.IDENTITY_QUESTION:
-        return renderIdentityQuestionStep();
       case OnboardingStep.MATCH_REVEAL:
         return renderMatchRevealStep();
-      case OnboardingStep.APP_INVITATION:
-        return renderAppInvitationStep();
-      case OnboardingStep.POTENTIAL_MATCHES:
-        return <PotentialMatchesComponent theme={theme} onSignUp={handleSignUp} />;
       default:
         return null;
     }
   };
-
   // Only show back button on certain steps
   const showBackButton =
     currentStep > OnboardingStep.BASIC_INFO &&
     currentStep !== OnboardingStep.PERSONALITY_QUESTIONS &&
-    currentStep !== OnboardingStep.IDENTITY_QUESTION &&
-    currentStep !== OnboardingStep.MATCH_REVEAL &&
-    currentStep !== OnboardingStep.APP_INVITATION;
+    currentStep !== OnboardingStep.MATCH_REVEAL;
 
   return (
     <SafeAreaView

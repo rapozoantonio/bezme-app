@@ -17,7 +17,7 @@ import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import useAuth from "../../hooks/useAuth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { FontAwesome } from "@expo/vector-icons";
-import { getThemeStyles, layout, typography, forms, feedback } from "@/styles";
+import { getThemeStyles, typography, forms, feedback } from "@/styles";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase";
 import { calculatePersonality } from "@/utils/personalityCalculator";
@@ -106,23 +106,18 @@ export default function RegisterScreen() {
 
           // Prepare the data to save
           const userData = {
-            // Basic personality data (required)
             personalityAnswers,
             personalityResult,
             personalityComplete: true,
-
-            // Additional onboarding data (if available)
             ...(onboardingData && {
               fullName: onboardingData.fullName,
               email: onboardingData.email,
               location: onboardingData.location,
               projectStatus: onboardingData.projectStatus,
               projectTypes: onboardingData.projectTypes,
-              projectDescription: onboardingData.projectDescription,
               selectedInterests: onboardingData.selectedInterests,
-              identityDescription: onboardingData.identityDescription,
-              joinEarlyAccess: onboardingData.joinEarlyAccess,
               onboardingComplete: true,
+              testParticipant: false,
             }),
 
             // Timestamp
@@ -206,7 +201,7 @@ export default function RegisterScreen() {
   };
 
   // Get device dimensions
-  const { height: windowHeight } = Dimensions.get('window');
+  const { height: windowHeight } = Dimensions.get("window");
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -215,12 +210,12 @@ export default function RegisterScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            justifyContent: 'space-between',
+            justifyContent: "space-between",
             paddingHorizontal: 16,
-            paddingVertical: 20
+            paddingVertical: 20,
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -242,7 +237,7 @@ export default function RegisterScreen() {
             </View>
           )}
 
-          <View style={{ flex: 1, justifyContent: 'space-between' }}>
+          <View style={{ flex: 1, justifyContent: "space-between" }}>
             {/* Form Fields in a more compact layout */}
             <View>
               <View style={{ marginBottom: 12 }}>
@@ -284,7 +279,9 @@ export default function RegisterScreen() {
               </View>
 
               <View style={{ marginBottom: 16 }}>
-                <Text style={{ ...typography.label, ...theme.textStyle, marginBottom: 4, fontSize: 13 }}>Confirm Password</Text>
+                <Text style={{ ...typography.label, ...theme.textStyle, marginBottom: 4, fontSize: 13 }}>
+                  Confirm Password
+                </Text>
                 <TextInput
                   style={{ ...forms.input, ...theme.inputStyle, height: 42 }}
                   placeholder="Confirm your password"
@@ -298,15 +295,15 @@ export default function RegisterScreen() {
 
             {/* Buttons and footer section */}
             <View>
-              <TouchableOpacity 
-                style={{ ...forms.button, ...theme.primaryButtonStyle, height: 46 }} 
-                onPress={handleRegister} 
+              <TouchableOpacity
+                style={{ ...forms.button, ...theme.primaryButtonStyle, height: 46 }}
+                onPress={handleRegister}
                 disabled={isLoading}
               >
                 {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={forms.buttonText}>Create Account</Text>}
               </TouchableOpacity>
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 12 }}>
                 <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }} />
                 <Text style={{ ...forms.dividerText, ...theme.textSecondaryStyle, marginHorizontal: 8 }}>OR</Text>
                 <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }} />
@@ -321,8 +318,10 @@ export default function RegisterScreen() {
                 <Text style={forms.buttonText}>Sign up with Google</Text>
               </TouchableOpacity>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 12 }}>
-                <Text style={{ ...typography.body, ...theme.textSecondaryStyle, fontSize: 13 }}>Already have an account?</Text>
+              <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 12 }}>
+                <Text style={{ ...typography.body, ...theme.textSecondaryStyle, fontSize: 13 }}>
+                  Already have an account?
+                </Text>
                 <Link href="/(auth)/login" asChild>
                   <TouchableOpacity>
                     <Text style={{ ...typography.link, fontSize: 13 }}> Sign In</Text>
@@ -331,8 +330,8 @@ export default function RegisterScreen() {
               </View>
 
               {/* Legal Terms Block - More compact */}
-              <View style={{ marginTop: 8, alignItems: 'center' }}>
-                <Text style={{ ...typography.caption, ...theme.textSecondaryStyle, fontSize: 11, textAlign: 'center' }}>
+              <View style={{ marginTop: 8, alignItems: "center" }}>
+                <Text style={{ ...typography.caption, ...theme.textSecondaryStyle, fontSize: 11, textAlign: "center" }}>
                   By signing up, you agree to our{" "}
                   <Link href="/(legal)/terms" asChild>
                     <Text style={{ ...typography.link, fontSize: 11 }}>Terms of Service</Text>
