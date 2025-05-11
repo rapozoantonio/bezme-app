@@ -18,9 +18,7 @@ import useAuth from "../../hooks/useAuth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { FontAwesome } from "@expo/vector-icons";
 import { getThemeStyles, typography, forms, feedback } from "@/styles";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../firebase";
-import { calculatePersonality } from "@/utils/personalityCalculator";
+import { saveOnboardingData } from "../../firebase";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -101,33 +99,9 @@ export default function RegisterScreen() {
       // 3. We haven't saved the data already
       if (user && Object.keys(personalityAnswers).length > 0 && !dataSaved) {
         try {
-          // Calculate personality type based on answers
-          const personalityResult = calculatePersonality(personalityAnswers);
-
-          // Prepare the data to save
-          const userData = {
-            personalityAnswers,
-            personalityResult,
-            personalityComplete: true,
-            ...(onboardingData && {
-              fullName: onboardingData.fullName,
-              email: onboardingData.email,
-              location: onboardingData.location,
-              projectStatus: onboardingData.projectStatus,
-              projectTypes: onboardingData.projectTypes,
-              selectedInterests: onboardingData.selectedInterests,
-              onboardingComplete: true,
-              testParticipant: false,
-            }),
-
-            // Timestamp
-            updatedAt: serverTimestamp(),
-            createdAt: serverTimestamp(),
-          };
-
-          // Update the user document to include all data
-          await setDoc(doc(db, "users", user.uid), userData, { merge: true });
-
+          // Save all onboarding data using our service function
+          await saveOnboardingData(user.uid, personalityAnswers, onboardingData);
+          
           // Mark as saved to prevent further save attempts
           setDataSaved(true);
 
@@ -138,8 +112,8 @@ export default function RegisterScreen() {
           } catch (err) {
             console.error("Failed to clear data from storage:", err);
           }
-        } catch (firestoreErr) {
-          console.error("Failed to save data to Firestore:", firestoreErr);
+        } catch (error) {
+          console.error("Failed to save onboarding data:", error);
         }
       }
     };

@@ -3,8 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { db } from "../../firebase.js";
-import { doc, getDoc } from "firebase/firestore";
+import { getUserData, hasCompletedOnboarding } from "../../firebase.js";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "expo-router";
 import styles, { colors, spacing, layout } from "@/styles/index";
@@ -39,46 +38,10 @@ export default function HomeScreen() {
       if (user) {
         // User is signed in
         try {
-          // Fetch the user's own document using their UID
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-
-          if (userDocSnap.exists()) {
-            const firebaseUserData = userDocSnap.data();
-
-            // Check if user has completed onboarding in Firestore
-            if (!firebaseUserData.onboardingComplete && !firebaseUserData.personalityComplete) {
-              // Only redirect if we haven't already checked (prevents infinite redirects)
-              if (!checkedOnboarding) {
-                setCheckedOnboarding(true);
-                // Make sure gateway access is set for the onboarding flow
-                try {
-                  localStorage.setItem("gateway_access_granted", "true");
-                } catch (err) {
-                  console.error("Failed to set gateway access:", err);
-                }
-                router.replace("/(auth)/welcome");
-                return;
-              }
-            } else {
-              // User has completed onboarding, set user data
-              setUserData({
-                displayName: firebaseUserData.displayName || user.displayName || "User",
-                photoURL: firebaseUserData.photoURL || user.photoURL || null,
-                onboardingComplete: firebaseUserData.onboardingComplete,
-                personalityComplete: firebaseUserData.personalityComplete,
-                testParticipant: firebaseUserData.testParticipant || false,
-                email: user.email || firebaseUserData.email || "",
-              });
-            }
-          } else {
-            // Document doesn't exist but user is authenticated
-            setUserData({
-              displayName: user.displayName || "User",
-              photoURL: user.photoURL || null,
-              email: user.email || "",
-            });
-
+          // Check if user has completed onboarding
+          const onboardingCompleted = await hasCompletedOnboarding(user.uid);
+          
+          if (!onboardingCompleted) {
             // Only redirect if we haven't already checked (prevents infinite redirects)
             if (!checkedOnboarding) {
               setCheckedOnboarding(true);
@@ -90,6 +53,48 @@ export default function HomeScreen() {
               }
               router.replace("/(auth)/welcome");
               return;
+            }
+          } else {
+            // User has completed onboarding, get their data
+            const firebaseUserData = await getUserData(user.uid);
+            
+            if (firebaseUserData) {
+              const typedUserData = firebaseUserData as {
+                displayName?: string;
+                photoURL?: string;
+                onboardingComplete?: boolean;
+                personalityComplete?: boolean;
+                testParticipant?: boolean;
+                email?: string;
+              };
+              
+              setUserData({
+                displayName: typedUserData.displayName || user.displayName || "User",
+                photoURL: typedUserData.photoURL || user.photoURL || null,
+                onboardingComplete: typedUserData.onboardingComplete,
+                personalityComplete: typedUserData.personalityComplete,
+                testParticipant: typedUserData.testParticipant || false,
+                email: user.email || typedUserData.email || "",
+              });
+            } else {
+              // No user data found, but user is authenticated
+              setUserData({
+                displayName: user.displayName || "User",
+                photoURL: user.photoURL || null,
+                email: user.email || "",
+              });
+              
+              // Redirect to onboarding if we haven't already checked
+              if (!checkedOnboarding) {
+                setCheckedOnboarding(true);
+                try {
+                  localStorage.setItem("gateway_access_granted", "true");
+                } catch (err) {
+                  console.error("Failed to set gateway access:", err);
+                }
+                router.replace("/(auth)/welcome");
+                return;
+              }
             }
           }
         } catch (error) {

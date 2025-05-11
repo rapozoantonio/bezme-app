@@ -19,7 +19,7 @@ import { personalityQuestions } from "@/constants/PersonalityQuestions";
 import { projectTypes, projectStatusOptions } from "@/constants/ProjectQuestionsOptions";
 import { interestOptions } from "@/constants/InterestsQuestionsOptions";
 import { locationOptions } from "@/constants/LocationOptions";
-
+import { savePartialOnboardingData } from "../../firebase";
 import MatchStatsComponent from "@/components/onboarding/MatchStatsComponent";
 import PotentialMatchesComponent from "@/components/onboarding/PotentialMatchesComponent";
 
@@ -442,6 +442,18 @@ export default function OnboardingScreen() {
   // Step navigation handlers
   const handleBasicInfoSubmit = () => {
     if (validateBasicInfo()) {
+    // Prepare the basic user data for marketing
+      const basicUserData = {
+        fullName: state.fullName,
+        email: state.email,
+        location: state.location
+      };
+      
+      // Save to Firebase for marketing (non-blocking)
+      savePartialOnboardingData(basicUserData)
+        .catch(err => console.error("Failed to save partial onboarding data:", err));
+      
+      // Continue to next step
       setCurrentStep(OnboardingStep.PROJECT_STATUS);
     }
   };
