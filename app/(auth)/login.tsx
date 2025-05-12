@@ -22,7 +22,7 @@ import {
   forms, 
   feedback
 } from '@/styles';
-import DebugReset from '@/components/DebugReset';
+// import DebugReset from '@/components/DebugReset';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -97,7 +97,7 @@ export default function LoginScreen() {
             <Text style={[feedback.errorText, theme.errorTextStyle]}>{error}</Text>
           </View>
         )}
-        <DebugReset />
+        {/* <DebugReset /> */}
         <View style={forms.formContainer}>
           <View style={forms.inputContainer}>
             <Text style={[typography.label, theme.textStyle]}>Email</Text>

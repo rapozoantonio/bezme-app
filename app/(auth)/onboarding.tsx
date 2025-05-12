@@ -442,17 +442,16 @@ export default function OnboardingScreen() {
   // Step navigation handlers
   const handleBasicInfoSubmit = () => {
     if (validateBasicInfo()) {
-    // Prepare the basic user data for marketing
+      // Prepare the basic user data for marketing
       const basicUserData = {
         fullName: state.fullName,
         email: state.email,
-        location: state.location
+        location: state.location,
       };
-      
+
       // Save to Firebase for marketing (non-blocking)
-      savePartialOnboardingData(basicUserData)
-        .catch(err => console.error("Failed to save partial onboarding data:", err));
-      
+      savePartialOnboardingData(basicUserData).catch((err) => console.error("Failed to save partial onboarding data:", err));
+
       // Continue to next step
       setCurrentStep(OnboardingStep.PROJECT_STATUS);
     }
@@ -909,26 +908,6 @@ export default function OnboardingScreen() {
       </ScrollView>
     );
   };
-  // Identity Question step removed
-  const renderMatchRevealStep = () => {
-    return (
-      <View style={[layout.container, layout.center, { paddingHorizontal: spacing.md }]}>
-        <View style={layout.headerContainer}>
-          <Text style={[typography.title, theme.textStyle]}>Almost there!</Text>
-          <Text style={[typography.subtitle, theme.textSecondaryStyle, { marginTop: spacing.md }]}>
-            Complete your account to see your results!
-          </Text>
-        </View>
-
-        <View style={[forms.formContainer, { marginTop: spacing.xl }]}>
-          <TouchableOpacity style={[forms.button, forms.primaryButton]} onPress={handleSignUp}>
-            <Text style={forms.buttonText}>Create Account</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
-
   // Render content based on current step
   const renderStepContent = () => {
     switch (currentStep) {
@@ -945,8 +924,7 @@ export default function OnboardingScreen() {
       case OnboardingStep.INTERESTS_SELECTION:
         return renderInterestsSelectionStep();
       case OnboardingStep.MATCH_REVEAL:
-        return renderMatchRevealStep();
-      default:
+        return <PotentialMatchesComponent theme={theme} onSignUp={handleSignUp} />;
         return null;
     }
   };
