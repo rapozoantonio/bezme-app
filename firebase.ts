@@ -1,10 +1,11 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { getAnalytics, isSupported } from "firebase/analytics";
 import { Platform } from "react-native";
 import { calculatePersonality } from "./utils/personalityCalculator";
+import { logger } from "./utils/logger";
 
+// Validate configuration
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -15,25 +16,21 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
+// Log configuration status
+logger.info('Firebase config status:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasProjectId: !!firebaseConfig.projectId,
+  hasMeasurementId: !!firebaseConfig.measurementId,
+  environment: process.env.NODE_ENV
+});
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Check if running in a browser environment
-const isClient = typeof window !== 'undefined';
-
-// Only initialize analytics if we're in a browser and it's supported
-let analytics = null;
-if (isClient) {
-  isSupported().then(yes => {
-    if (yes) {
-      analytics = getAnalytics(app);
-    }
-  });
-}
-
+// Initialize authentication and firestore
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export { analytics };
+export { app };
 
 // ======== FIREBASE SERVICE FUNCTIONS ========
 
@@ -42,7 +39,7 @@ export { analytics };
  * @param {Object} basicInfo - Basic user information collected during onboarding
  * @returns {Promise<string|null>} - Session ID or null if operation failed
  */
-export const savePartialOnboardingData = async (basicInfo) => {
+export const savePartialOnboardingData = async (basicInfo: Record<string, any>) => {
   try {
     // Generate a unique ID for anonymous users
     const sessionId = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
@@ -76,7 +73,7 @@ export const savePartialOnboardingData = async (basicInfo) => {
  * @param {string} userId - Firebase Auth user ID
  * @returns {Promise<Object|null>} - User data or null if not found
  */
-export const getUserData = async (userId) => {
+export const getUserData = async (userId: string) => {
   try {
     const userDocRef = doc(db, "users", userId);
     const userDocSnap = await getDoc(userDocRef);
@@ -98,7 +95,14 @@ export const getUserData = async (userId) => {
  * @param {Object} onboardingData - Complete onboarding data
  * @returns {Promise<boolean>} - Success status
  */
-export const saveOnboardingData = async (userId, personalityAnswers, onboardingData) => {
+export const saveOnboardingData = async (userId: string, personalityAnswers: Record<string, any>, onboardingData?: {
+  fullName?: string;
+  email?: string;
+  location?: string;
+  projectStatus?: string;
+  projectTypes?: string[];
+  selectedInterests?: string[];
+}) => {
   try {
     // Calculate personality type based on answers
     const personalityResult = calculatePersonality(personalityAnswers);
@@ -155,7 +159,7 @@ export const saveOnboardingData = async (userId, personalityAnswers, onboardingD
  * @param {string} userId - Firebase Auth user ID
  * @returns {Promise<boolean>} - True if onboarding is complete
  */
-export const hasCompletedOnboarding = async (userId) => {
+export const hasCompletedOnboarding = async (userId: string) => {
   try {
     const userData = await getUserData(userId);
     return !!(userData && (userData.onboardingComplete || userData.personalityComplete));

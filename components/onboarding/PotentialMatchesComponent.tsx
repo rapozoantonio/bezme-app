@@ -2,6 +2,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import { layout, typography, forms, spacing } from "@/styles";
+import * as GTM from "@/services/gtm";
 
 interface MatchProfile {
   id: string;
@@ -14,7 +15,8 @@ interface PotentialMatchesComponentProps {
   onSignUp: () => void;
 }
 
-const PotentialMatchesComponent: React.FC<PotentialMatchesComponentProps> = ({ theme, onSignUp }) => {  // Sample match profiles with avatar types
+const PotentialMatchesComponent: React.FC<PotentialMatchesComponentProps> = ({ theme, onSignUp }) => {
+  // Sample match profiles with avatar types
   const potentialMatches: MatchProfile[] = [
     { id: "1", description: "Founder of food experience app", avatarType: "founder" },
     { id: "2", description: "Real estate entrepreneur, YouTuber", avatarType: "realEstate" },
@@ -22,13 +24,12 @@ const PotentialMatchesComponent: React.FC<PotentialMatchesComponentProps> = ({ t
     { id: "4", description: "Travel and lifestyle blogger", avatarType: "blogger" },
     { id: "5", description: "Influencer, founder of marketing agency", avatarType: "nomad" },
     { id: "6", description: "Drone videographer and affiliate marketer", avatarType: "videographer" },
-  ];// Render avatar using DiceBear API - Modern avatars targeting young entrepreneurs
+  ]; 
   const renderAvatar = (avatarType: string) => {
     // Map avatar types to appropriate seeds and styles for professional but modern look
-    let style = "lorelei"; // Modern, professional default style
+    let style = "lorelei"; 
     let seed = `bezme-${avatarType}`;
     let backgroundColors = encodeURIComponent("f4f4f5"); // Light neutral background
-    // Customize avatars based on persona types to appeal to young entrepreneurs
     // Using human-like avatar styles for all personas
     switch (avatarType) {
       case "founder":
@@ -117,7 +118,6 @@ const PotentialMatchesComponent: React.FC<PotentialMatchesComponentProps> = ({ t
                 borderColor: theme.colors.border,
               }}
             >
-              {" "}
               <View
                 style={{
                   width: 50,
@@ -139,7 +139,11 @@ const PotentialMatchesComponent: React.FC<PotentialMatchesComponentProps> = ({ t
         </View>
         <TouchableOpacity
           style={[forms.button, forms.primaryButton, { marginTop: spacing.xl, width: "100%" }]}
-          onPress={onSignUp}
+          onPress={() => {
+            // Track with Google Tag Manager
+            GTM.pushToDataLayer(GTM.GTMEvents.MATCHES_PROFILES_FUNNEL);
+            onSignUp();
+          }}
         >
           <Text style={forms.buttonText}>Sign Up</Text>
         </TouchableOpacity>

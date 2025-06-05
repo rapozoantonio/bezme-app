@@ -22,6 +22,8 @@ import { locationOptions } from "@/constants/LocationOptions";
 import { savePartialOnboardingData } from "../../firebase";
 import MatchStatsComponent from "@/components/onboarding/MatchStatsComponent";
 import PotentialMatchesComponent from "@/components/onboarding/PotentialMatchesComponent";
+// Import GTM tracking functions
+import * as GTM from "@/services/gtm";
 
 // Define onboarding steps
 enum OnboardingStep {
@@ -438,10 +440,12 @@ export default function OnboardingScreen() {
 
     return isValid;
   };
-
   // Step navigation handlers
   const handleBasicInfoSubmit = () => {
     if (validateBasicInfo()) {
+      // Track with Google Tag Manager
+      GTM.pushToDataLayer(GTM.GTMEvents.ABOUT_YOURSELF_ANSWERED);
+
       // Prepare the basic user data for marketing
       const basicUserData = {
         fullName: state.fullName,
@@ -456,9 +460,11 @@ export default function OnboardingScreen() {
       setCurrentStep(OnboardingStep.PROJECT_STATUS);
     }
   };
-
   const handleProjectStatusSelect = (statusId: string) => {
     dispatch({ type: "SET_FIELD", field: "projectStatus", value: statusId });
+
+    // Track with Google Tag Manager
+    GTM.trackProjectStatus(statusId);
 
     if (statusId === "no") {
       if (Platform.OS === "web") {
@@ -487,8 +493,10 @@ export default function OnboardingScreen() {
   const handleProjectTypeSelect = (typeId: string) => {
     dispatch({ type: "TOGGLE_PROJECT_TYPE", typeId });
   };
-
   const handleProjectTypeSubmit = () => {
+    // Track with Google Tag Manager
+    GTM.trackProjectCategory(state.projectTypes.join(","));
+
     // Skip directly to personality questions
     setCurrentStep(OnboardingStep.PERSONALITY_QUESTIONS);
   };
@@ -498,7 +506,6 @@ export default function OnboardingScreen() {
     setSelectedRating(rating);
     setIsLoading(true);
   };
-
   const handleRatingSelected = (rating: number) => {
     // Store the answer
     dispatch({
@@ -506,6 +513,9 @@ export default function OnboardingScreen() {
       questionId: currentQuestion.id,
       rating,
     });
+
+    // Track with Google Tag Manager
+    GTM.trackPersonalityQuestion(currentQuestion.id, rating);
 
     // Short delay to show the selection before moving on
     const navigationTimer = setTimeout(() => {
@@ -524,17 +534,21 @@ export default function OnboardingScreen() {
 
     return () => clearTimeout(navigationTimer);
   };
-
   const handleMatchStatsContinue = () => {
+    // Track with Google Tag Manager
+    GTM.pushToDataLayer(GTM.GTMEvents.MATCHES_COMPATIBILITY_FUNNEL);
+
     setCurrentStep(OnboardingStep.INTERESTS_SELECTION);
   };
 
   const handleInterestSelect = (interestId: string) => {
     dispatch({ type: "TOGGLE_INTEREST", interestId });
   };
-
   // Handler for sign up button
   const handleSignUp = () => {
+    // Track with Google Tag Manager
+    GTM.pushToDataLayer(GTM.GTMEvents.MATCHES_PROFILES_FUNNEL);
+
     // Store data in sessionStorage with the correct keys
     try {
       // Create final onboarding data object without removed fields
@@ -856,7 +870,6 @@ export default function OnboardingScreen() {
               This doesn't impact your result, but helps us mix you better 💌
             </Text>
           </View>
-
           <View
             style={{
               flexDirection: "row",
@@ -878,8 +891,6 @@ export default function OnboardingScreen() {
               />
             ))}
           </View>
-
-          {/* Add continue button */}
           <TouchableOpacity
             style={[
               forms.button,
@@ -890,7 +901,11 @@ export default function OnboardingScreen() {
                 backgroundColor: theme.colors.border,
               },
             ]}
-            onPress={() => setCurrentStep(OnboardingStep.MATCH_REVEAL)}
+            onPress={() => {
+              // Track interests selected with Google Tag Manager
+              GTM.trackInterests(state.selectedInterests);
+              setCurrentStep(OnboardingStep.MATCH_REVEAL);
+            }}
             disabled={state.selectedInterests.length < 2}
           >
             <Text

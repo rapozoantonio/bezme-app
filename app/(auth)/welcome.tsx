@@ -71,13 +71,7 @@ export default function WelcomeScreen() {
   };
 
   const handleSignIn = () => { 
-    // The key change: Use replace instead of push and ensure the path is correct
     router.replace('/(auth)/login');
-    
-    // If the above doesn't work, uncomment this direct approach
-    // setTimeout(() => {
-    //   window.location.href = '/(auth)/login';
-    // }, 100);
   };
 
   return (
@@ -97,7 +91,6 @@ export default function WelcomeScreen() {
       <SafeAreaView style={[layout.container, { backgroundColor: 'transparent' }]}>
         <View style={[layout.container, { justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingVertical: spacing.xxl }]}>
           <View style={{ alignItems: 'center', marginTop: spacing.xxl }}>
-            {/* Replace with your app logo */}
             <Image 
               source={require('../../assets/images/bezme-logo-white.png')} 
               style={logoStyles.logoPlaceholder} 
@@ -125,7 +118,6 @@ export default function WelcomeScreen() {
                 <Text style={[typography.button, { color: '#fff' }]}>Get Started</Text>
               </TouchableOpacity>
               
-              {/* Direct login button with router.replace */}
               <TouchableOpacity
                 style={[logoStyles.button, { marginTop: spacing.md }]}
                 onPress={handleSignIn}
@@ -137,11 +129,11 @@ export default function WelcomeScreen() {
             {/* Terms and Privacy Policy */}
             <View style={layout.termsContainer}>
               <Text style={[typography.caption, { color: '#fff' }]}>
-                By signing up, you agree to our{" "}
+                By signing up, you agree to our
                 <TouchableOpacity onPress={() => router.push("/(legal)/terms")}>
                   <Text style={[theme.linkStyle, { color: '#fff', textDecorationLine: 'underline' }]}>Terms of Service</Text>
-                </TouchableOpacity>{" "}
-                and{" "}
+                </TouchableOpacity>
+                and
                 <TouchableOpacity onPress={() => router.push("/(legal)/privacy")}>
                   <Text style={[theme.linkStyle, { color: '#fff', textDecorationLine: 'underline' }]}>Privacy Policy</Text>
                 </TouchableOpacity>

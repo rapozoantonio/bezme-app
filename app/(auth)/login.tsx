@@ -22,7 +22,9 @@ import {
   forms, 
   feedback
 } from '@/styles';
-// import DebugReset from '@/components/DebugReset';
+import * as GTM from "@/services/gtm";
+// import DebugReset from '@/components/debugComponents/DebugReset';
+// import TestFirebaseAnalytics from '@/components/debugComponents/TestFirebaseAnalytics';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -52,7 +54,6 @@ export default function LoginScreen() {
       }, 300);
     }
   }, [user, router]);
-
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
@@ -61,16 +62,19 @@ export default function LoginScreen() {
     
     try {
       console.log('Attempting login with email and password');
+      // Track with Google Tag Manager - login attempt
+      GTM.pushToDataLayer(GTM.GTMEvents.CREATE_ACCOUNT);
       await login(email, password);
       // The useEffect above will handle navigation when user state changes
     } catch (err: any) {
       console.error('Login error:', err);
     }
   };
-
   const handleGoogleLogin = async () => {
     try {
       console.log('Attempting login with Google');
+      // Track with Google Tag Manager - Google login attempt
+      GTM.trackGoogleSignIn();
       await loginWithGoogle();
       // The useEffect above will handle navigation when user state changes
     } catch (err: any) {
@@ -98,6 +102,7 @@ export default function LoginScreen() {
           </View>
         )}
         {/* <DebugReset /> */}
+        {/* <TestFirebaseAnalytics /> */}
         <View style={forms.formContainer}>
           <View style={forms.inputContainer}>
             <Text style={[typography.label, theme.textStyle]}>Email</Text>

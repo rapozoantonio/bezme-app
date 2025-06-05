@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { getUserData, hasCompletedOnboarding } from "../../firebase.js";
+import { getUserData, hasCompletedOnboarding } from "../../firebase";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "expo-router";
 import styles, { colors, spacing, layout } from "@/styles/index";
@@ -18,8 +18,8 @@ export default function HomeScreen() {
     photoURL: string | null;
     onboardingComplete?: boolean;
     personalityComplete?: boolean;
-    testParticipant?: boolean; // New field to check if user is a test participant
-    email?: string; // To display in the waitlist message
+    testParticipant?: boolean; 
+    email?: string; 
   };
 
   const [userData, setUserData] = useState<UserData>({
@@ -126,7 +126,6 @@ export default function HomeScreen() {
     borderColor: "#FFFFFF",
   } as const;
 
-  // Content for test participants
   const TestParticipantContent = () => (
     <>
       <ThemedView
@@ -163,7 +162,6 @@ export default function HomeScreen() {
     </>
   );
 
-  // Content for waitlisted users
   const WaitlistContent = () => (
     <>
       <ThemedView
@@ -287,7 +285,6 @@ export default function HomeScreen() {
               Hi, {userData.displayName}
             </ThemedText>
 
-            {/* Show different content depending on whether user is a test participant */}
             {userData.testParticipant ? <TestParticipantContent /> : <WaitlistContent />}
           </>
         )}

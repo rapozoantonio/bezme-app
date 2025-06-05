@@ -16,8 +16,7 @@ Basic project structure with tabs is in place
 
 TODO:
 
-- Add google gtag
-- Refactor
+- Refactor (GOOGLE TAG MANAGER, CHECK CHANGES AND MAKE SURE CORRECT) - TOOK 2-3 WEEKS WITH FIRST CHANGES.
 - Improve naming of testParticipant name of variable
 - Add not saved users doc
 - Add whatsapp saving

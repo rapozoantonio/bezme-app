@@ -11,6 +11,9 @@ import { View, ActivityIndicator, Platform } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '../hooks/useAuth';
 
+// Import GTM service to initialize it at app startup
+import '../services/gtm';
+
 // Use a safer approach for web-only code
 if (Platform.OS === 'web') {
   // Use global or window to check if we're truly in a browser environment

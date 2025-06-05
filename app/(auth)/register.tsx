@@ -19,6 +19,8 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { FontAwesome } from "@expo/vector-icons";
 import { getThemeStyles, typography, forms, feedback } from "@/styles";
 import { saveOnboardingData } from "../../firebase";
+// Import GTM tracking functions
+import * as GTM from "@/services/gtm";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -132,7 +134,6 @@ export default function RegisterScreen() {
       return () => clearTimeout(redirectTimer);
     }
   }, [user, router]);
-
   const handleRegister = async () => {
     // Basic validation
     if (!name || !email || !password || !confirmPassword) {
@@ -151,6 +152,9 @@ export default function RegisterScreen() {
     }
 
     try {
+      // Track with Google Tag Manager
+      GTM.trackCreateAccount();
+      
       // Register the user with our existing auth service
       await register(email, password, name);
       // The useEffect will handle saving all the data after auth
@@ -158,9 +162,11 @@ export default function RegisterScreen() {
       console.error("Registration error:", err);
     }
   };
-
   const handleGoogleSignUp = async () => {
     try {
+      // Track with Google Tag Manager
+      GTM.trackGoogleSignIn();
+      
       // Sign in with Google using our existing auth service
       await loginWithGoogle();
       // The useEffect will handle saving all the data after auth
@@ -306,11 +312,11 @@ export default function RegisterScreen() {
               {/* Legal Terms Block - More compact */}
               <View style={{ marginTop: 8, alignItems: "center" }}>
                 <Text style={{ ...typography.caption, ...theme.textSecondaryStyle, fontSize: 11, textAlign: "center" }}>
-                  By signing up, you agree to our{" "}
+                  By signing up, you agree to our
                   <Link href="/(legal)/terms" asChild>
                     <Text style={{ ...typography.link, fontSize: 11 }}>Terms of Service</Text>
-                  </Link>{" "}
-                  and{" "}
+                  </Link>
+                  and
                   <Link href="/(legal)/privacy" asChild>
                     <Text style={{ ...typography.link, fontSize: 11 }}>Privacy Policy</Text>
                   </Link>
